@@ -1,0 +1,4 @@
+# the requirements to run the system in production
+Django
+psycopg2    # http://initd.org/psycopg/docs/install.html ?
+
