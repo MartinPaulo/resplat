@@ -2,6 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 
 
 class Allocation(models.Model):
@@ -20,30 +21,35 @@ class Allocation(models.Model):
                                max_digits=15, decimal_places=2)
     idm_identifier = models.CharField(max_length=50, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    idm_domain = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                                   blank=True,
-                                   null=True,
-                                   related_name='allocation_idm_domain')
-    application = models.ForeignKey('storage.Request', models.DO_NOTHING,
-                                    blank=True,
-                                    null=True,
-                                    related_name='allocations')
-    collection = models.ForeignKey('storage.Project', models.DO_NOTHING,
-                                   related_name='allocations')
-    operational_center = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                                           blank=True,
-                                           null=True,
-                                           related_name='allocation_op_center')
-    site = models.ForeignKey('storage.Label', models.DO_NOTHING, blank=True,
-                             null=True,
-                             related_name='allocation_site')
-    status = models.ForeignKey('storage.Label', models.DO_NOTHING, blank=True,
-                               null=True,
-                               related_name='allocation_status',
-                               verbose_name='allocation status')
-    storage_product = models.ForeignKey('storage.StorageProduct',
-                                        models.DO_NOTHING,
-                                        related_name='allocations')
+    idm_domain = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='IDM Domain'),
+        blank=True, null=True, related_name='allocation_idm_domain')
+    application = models.ForeignKey(
+        'storage.Request', models.DO_NOTHING,
+        blank=True, null=True, related_name='allocations')
+    collection = models.ForeignKey(
+        'storage.Project', models.DO_NOTHING,
+        related_name='allocations')
+    operational_center = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Operational Center'),
+        blank=True, null=True, related_name='allocation_op_center')
+    site = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Data Center'),
+        blank=True, null=True, related_name='allocation_site')
+    status = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Allocation Status'),
+        blank=True, null=True, related_name='allocation_status',
+        verbose_name='allocation status')
+    storage_product = models.ForeignKey(
+        'storage.StorageProduct', models.DO_NOTHING,
+        related_name='allocations')
+
+    def __str__(self):
+        return self.collection.name
 
     class Meta:
         db_table = 'applications_allocation'
@@ -186,15 +192,20 @@ class Project(models.Model):
     id = models.AutoField(primary_key=True)
     overview = models.TextField(blank=True, null=True)
     name = models.TextField(verbose_name='Collection Name')
-    collective = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                                   blank=True, null=True,
-                                   related_name='collection_collective')
-    status = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                               blank=True, null=True,
-                               related_name='collection_status')
+    collective = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Collective'),
+        blank=True, null=True, related_name='collection_collective')
+    status = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Collection Status'),
+        blank=True, null=True, related_name='collection_status')
     rifcs_consent = models.BooleanField(
         default=False,
         verbose_name='Meta data available to sponsoring institution')
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         db_table = 'applications_project'
@@ -241,6 +252,9 @@ class Request(models.Model):
         'storage.SubOrganization', models.DO_NOTHING, blank=True, null=True,
         related_name='application_suborganization')
 
+    def __str__(self):
+        return self.code
+
     class Meta:
         db_table = 'applications_request'
 
@@ -268,6 +282,9 @@ class StorageProduct(models.Model):
     operational_center = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         related_name='storage_product_op_center')
+
+    def __str__(self):
+        return self.product_name.value
 
     class Meta:
         db_table = 'applications_storageproduct'
@@ -445,6 +462,9 @@ class Label(models.Model):
     parent_type = models.ForeignKey('self', models.DO_NOTHING, blank=True,
                                     null=True,
                                     related_name='Label_Parent_Type')
+
+    def __str__(self):
+        return self.value
 
     class Meta:
         db_table = 'labels_label'

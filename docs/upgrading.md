@@ -222,6 +222,14 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
+Then create the django superuser
+
+```bash
+python manage.py createsuperuser
+```
+
+
+
 
 
 
