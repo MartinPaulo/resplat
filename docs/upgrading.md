@@ -214,9 +214,13 @@ python manage.py makemigrations
 python manage.py migrate --fake-initial
 ```
 
-Then updated the model to remove the fields we don't want
+Then updated the model to remove the fields we don't want and ran the migration
+again
 
-
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
 
 
 

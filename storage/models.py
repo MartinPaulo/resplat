@@ -1,10 +1,3 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each ForeignKey has `on_delete` set to the desired behavior.
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-from __future__ import unicode_literals
-
 import re
 
 from django.core.exceptions import ValidationError
@@ -12,40 +5,43 @@ from django.db import models
 
 
 class Allocation(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+        approval_date
+        ingested
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    approval_date = models.DateField(blank=True, null=True)
-    ingested = models.DecimalField(max_digits=15, decimal_places=2, blank=True,
-                                   null=True)
     size = models.DecimalField(verbose_name='size of allocation (GB)',
                                max_digits=15, decimal_places=2)
     idm_identifier = models.CharField(max_length=50, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
-    idm_domain = models.ForeignKey('Label', models.DO_NOTHING, blank=True,
+    idm_domain = models.ForeignKey('storage.Label', models.DO_NOTHING,
+                                   blank=True,
                                    null=True,
                                    related_name='allocation_idm_domain')
-    application = models.ForeignKey('Request', models.DO_NOTHING,
+    application = models.ForeignKey('storage.Request', models.DO_NOTHING,
                                     blank=True,
                                     null=True,
                                     related_name='allocations')
-    collection = models.ForeignKey('Project', models.DO_NOTHING,
+    collection = models.ForeignKey('storage.Project', models.DO_NOTHING,
                                    related_name='allocations')
-    operational_center = models.ForeignKey('Label',
-                                           models.DO_NOTHING, blank=True,
+    operational_center = models.ForeignKey('storage.Label', models.DO_NOTHING,
+                                           blank=True,
                                            null=True,
                                            related_name='allocation_op_center')
-    site = models.ForeignKey('Label', models.DO_NOTHING,
-                             blank=True,
-                             null=True, related_name='allocation_site')
-    status = models.ForeignKey('Label', models.DO_NOTHING,
-                               blank=True,
-                               null=True, related_name='allocation_status',
+    site = models.ForeignKey('storage.Label', models.DO_NOTHING, blank=True,
+                             null=True,
+                             related_name='allocation_site')
+    status = models.ForeignKey('storage.Label', models.DO_NOTHING, blank=True,
+                               null=True,
+                               related_name='allocation_status',
                                verbose_name='allocation status')
-    storage_product = models.ForeignKey('StorageProduct',
+    storage_product = models.ForeignKey('storage.StorageProduct',
                                         models.DO_NOTHING,
                                         related_name='allocations')
 
@@ -54,45 +50,26 @@ class Allocation(models.Model):
 
 
 class CollectionProfile(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+        impact_of_loss
+        target_audience
+        current_size
+        estimated_growth
+        migration_assistance_required
+        anticipated_growth
+        current_storage_medium
+        estimated_annual_usage
+        growth_estimate_period
+        user_access_frequency
+        user_interaction blank
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    impact_of_loss = models.TextField(blank=True, null=True)
-    target_audience = models.TextField(blank=True, null=True)
-    current_size = models.DecimalField(max_digits=15, decimal_places=2,
-                                       blank=True, null=True)
-    estimated_growth = models.DecimalField(max_digits=15, decimal_places=2,
-                                           blank=True, null=True)
-    migration_assistance_required = models.BooleanField()
-    anticipated_growth = models.ForeignKey('Label',
-                                           models.DO_NOTHING,
-                                           blank=True, null=True,
-                                           related_name='collection_growth')
-    created_by_id = models.IntegerField(blank=True, null=True)
-    current_storage_medium = models.ForeignKey('Label',
-                                               models.DO_NOTHING,
-                                               related_name='collection_storage_medium',
-                                               blank=True,
-                                               null=True)
-    estimated_annual_usage = models.ForeignKey('Label',
-                                               models.DO_NOTHING,
-                                               related_name='collection_usage',
-                                               blank=True,
-                                               null=True)
-    growth_estimate_period = models.ForeignKey('Label',
-                                               models.DO_NOTHING, blank=True,
-                                               null=True,
-                                               related_name='collection_growth_period')
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    user_access_frequency = models.ForeignKey('Label',
-                                              models.DO_NOTHING,
-                                              blank=True, null=True,
-                                              related_name='collection_access_frequency')
-    user_interaction = models.ForeignKey('Label',
-                                         models.DO_NOTHING,
-                                         blank=True, null=True,
-                                         related_name='collection_user_interaction')
     collection = models.OneToOneField('storage.Project')  # unique=True?
     merit_justification = models.TextField(blank=True, null=True)
     estimated_final_size = models.DecimalField(
@@ -105,16 +82,19 @@ class CollectionProfile(models.Model):
 
 
 class Custodian(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    collection = models.ForeignKey('Project', models.DO_NOTHING,
+    collection = models.ForeignKey('storage.Project', models.DO_NOTHING,
                                    related_name='custodians')
-    person = models.ForeignKey('Contact', models.DO_NOTHING)
-    role = models.ForeignKey('Label', models.DO_NOTHING,
+    person = models.ForeignKey('storage.Contact', models.DO_NOTHING)
+    role = models.ForeignKey('storage.Label', models.DO_NOTHING,
                              verbose_name='Custodian Role',
                              related_name='custodian_role')
 
@@ -123,17 +103,20 @@ class Custodian(models.Model):
 
 
 class Domain(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    active_flag = models.BooleanField()
     split = models.DecimalField(
         help_text='Percentage split of the total allocation',
         max_digits=5, decimal_places=4, default=0, blank=True, null=True,
         verbose_name='percentage split in decimal')
-    collection = models.ForeignKey('Project', models.DO_NOTHING,
+    collection = models.ForeignKey('storage.Project', models.DO_NOTHING,
                                    related_name='domains')
     fieldofresearch = models.ForeignKey('FieldOfResearch', models.DO_NOTHING,
                                         verbose_name='Field of Research',
@@ -144,12 +127,15 @@ class Domain(models.Model):
 
 
 class FieldOfResearch(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
     code = models.CharField(max_length=6, unique=True, verbose_name='for code')
     description = models.CharField(max_length=200, blank=True, null=True)
 
@@ -158,13 +144,16 @@ class FieldOfResearch(models.Model):
 
 
 class Ingest(models.Model):
-    # not quite sure what to ditch/keep yet
+    """
+    Not quite sure what to ditch/keep yet
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
     extraction_date = models.DateField()
     allocated_capacity = models.DecimalField(
         max_digits=15, decimal_places=2,
@@ -172,9 +161,9 @@ class Ingest(models.Model):
     used_capacity = models.DecimalField(max_digits=15, decimal_places=2,
                                         verbose_name='ingested capacity in GB',
                                         blank=True, null=True)
-    collection = models.ForeignKey('Project', models.DO_NOTHING,
+    collection = models.ForeignKey('storage.Project', models.DO_NOTHING,
                                    related_name='ingests')
-    storage_product = models.ForeignKey('StorageProduct',
+    storage_product = models.ForeignKey('storage.StorageProduct',
                                         models.DO_NOTHING)
     used_replica = models.DecimalField(
         max_digits=15, decimal_places=2, blank=True, null=True,
@@ -185,19 +174,22 @@ class Ingest(models.Model):
 
 
 class Project(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+        primary_data_source
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    primary_data_source = models.TextField(blank=True, null=True)
     overview = models.TextField(blank=True, null=True)
     name = models.TextField(verbose_name='Collection Name')
-    collective = models.ForeignKey('Label', models.DO_NOTHING,
+    collective = models.ForeignKey('storage.Label', models.DO_NOTHING,
                                    blank=True, null=True,
                                    related_name='collection_collective')
-    status = models.ForeignKey('Label', models.DO_NOTHING,
+    status = models.ForeignKey('storage.Label', models.DO_NOTHING,
                                blank=True, null=True,
                                related_name='collection_status')
     rifcs_consent = models.BooleanField(
@@ -209,45 +201,44 @@ class Project(models.Model):
 
 
 class Request(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+        data_management_solution
+        operational_funding_source
+        estimated_duration
+        requested_start_date
+        project # BOGUS!
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    data_management_solution = models.TextField(blank=True, null=True)
-    operational_funding_source = models.ForeignKey(
-        'Organisation',
-        models.DO_NOTHING,
-        blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    estimated_duration = models.TextField(blank=True, null=True)
-    requested_start_date = models.DateField(blank=True, null=True)
-    project = models.ForeignKey(Project, models.DO_NOTHING,
-                                blank=True, null=True)
     code = models.CharField(max_length=15, verbose_name='application code')
     application_form = models.URLField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     capital_funding_source = models.ForeignKey(
-        'Label', models.DO_NOTHING, blank=True, null=True,
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
         related_name='application_cap_funding_source')
     institution = models.ForeignKey(
-        'Organisation', models.DO_NOTHING, blank=True, null=True,
+        'storage.Organisation', models.DO_NOTHING, blank=True, null=True,
         verbose_name='sponsoring institution',
         related_name='application_institution')
-    node = models.ForeignKey('Label', models.DO_NOTHING,
+    node = models.ForeignKey('storage.Label', models.DO_NOTHING,
                              blank=True, null=True,
                              verbose_name='target node',
                              related_name='Application_Node')
-    scheme = models.ForeignKey('Label', models.DO_NOTHING,
+    scheme = models.ForeignKey('storage.Label', models.DO_NOTHING,
                                blank=True, null=True,
                                verbose_name='allocation scheme',
                                related_name='application_allocation_scheme')
-    status = models.ForeignKey('Label', models.DO_NOTHING,
+    status = models.ForeignKey('storage.Label', models.DO_NOTHING,
                                blank=True, null=True,
                                verbose_name='application status',
                                related_name='application_status')
     institution_faculty = models.ForeignKey(
-        'SubOrganization', models.DO_NOTHING, blank=True, null=True,
+        'storage.SubOrganization', models.DO_NOTHING, blank=True, null=True,
         related_name='application_suborganization')
 
     class Meta:
@@ -255,24 +246,27 @@ class Request(models.Model):
 
 
 class StorageProduct(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
     unit_cost = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     operational_cost = models.DecimalField(max_digits=15, decimal_places=2,
                                            default=0)
     capacity = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     raw_conversion_factor = models.DecimalField(max_digits=6, decimal_places=4,
                                                 default=1)
-    product_name = models.ForeignKey('Label', models.DO_NOTHING,
+    product_name = models.ForeignKey('storage.Label', models.DO_NOTHING,
                                      related_name='storageproduct_name')
-    scheme = models.ForeignKey('Label', models.DO_NOTHING,
+    scheme = models.ForeignKey('storage.Label', models.DO_NOTHING,
                                related_name='storageproduct_allocation_scheme')
     operational_center = models.ForeignKey(
-        'Label', models.DO_NOTHING, blank=True, null=True,
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
         related_name='storage_product_op_center')
 
     class Meta:
@@ -280,12 +274,15 @@ class StorageProduct(models.Model):
 
 
 class SubOrganization(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
     name = models.TextField(verbose_name='faculty')
 
     class Meta:
@@ -302,16 +299,19 @@ def validate_orcid(value):
 
 
 class Contact(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        updated_by_id
+        last_modified
+        active_flag
+        show_personal_contact_details
+        show_mobile_number
+        show_business_contact_details
+        notes
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    show_personal_contact_details = models.BooleanField()
-    show_mobile_number = models.BooleanField()
-    show_business_contact_details = models.BooleanField()
-    notes = models.TextField(blank=True, null=True)
     first_name = models.CharField('First name of contact', max_length=30)
     last_name = models.CharField('Last name of contact', max_length=30)
     phone_number = models.CharField(max_length=30, blank=True, null=True)
@@ -324,14 +324,14 @@ class Contact(models.Model):
     orcid = models.URLField(blank=True, null=True,
                             verbose_name='ORCID of contact',
                             validators=[validate_orcid])
-    organisation = models.ForeignKey('Organisation', models.DO_NOTHING,
+    organisation = models.ForeignKey('storage.Organisation', models.DO_NOTHING,
                                      blank=True, null=True,
                                      related_name='contact_organisation')
-    position = models.ForeignKey('Label', models.DO_NOTHING,
+    position = models.ForeignKey('storage.Label', models.DO_NOTHING,
                                  blank=True, null=True,
                                  verbose_name='Organisation Position',
                                  related_name='contact_position')
-    title = models.ForeignKey('Label', models.DO_NOTHING,
+    title = models.ForeignKey('storage.Label', models.DO_NOTHING,
                               blank=True, null=True,
                               verbose_name='Contact Title',
                               related_name='contact_title')
@@ -341,37 +341,28 @@ class Contact(models.Model):
 
 
 class Organisation(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        last_modified
+        updated_by_id
+        active_flag
+        number_weekly_working_days
+        number_weekly_working_hours
+        operational_center
+        operational_staff_petabyte
+        operational_staff_role
+        salary_overhead
+        weeks_of_annual_holiday
+        weeks_of_public_holiday
+        weeks_of_sick_leave
+        year_end
+        year_start
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    active_flag = models.BooleanField()
-    number_weekly_working_days = models.DecimalField(max_digits=5,
-                                                     decimal_places=2)
-    number_weekly_working_hours = models.DecimalField(max_digits=5,
-                                                      decimal_places=2)
-    operational_center = models.ForeignKey('Label',
-                                           models.DO_NOTHING,
-                                           related_name='org_operational_center',
-                                           blank=True, null=True)
-    operational_staff_petabyte = models.DecimalField(max_digits=5,
-                                                     decimal_places=2)
-    operational_staff_role = models.ForeignKey('Label',
-                                               models.DO_NOTHING,
-                                               related_name='organisation_ops_role',
-                                               blank=True,
-                                               null=True)
-    salary_overhead = models.DecimalField(max_digits=5, decimal_places=4)
-    weeks_of_annual_holiday = models.DecimalField(max_digits=5,
-                                                  decimal_places=2)
-    weeks_of_public_holiday = models.DecimalField(max_digits=5,
-                                                  decimal_places=2)
-    weeks_of_sick_leave = models.DecimalField(max_digits=5, decimal_places=2)
-    year_end = models.DateField(blank=True, null=True)
-    year_start = models.DateField(blank=True, null=True)
     short_name = models.CharField(max_length=20, blank=True, null=True)
-    name = models.ForeignKey('Label', models.DO_NOTHING,
+    name = models.ForeignKey('storage.Label', models.DO_NOTHING,
                              related_name='organisation_name')
     rifcs_email = models.TextField(blank=True, null=True,
                                    verbose_name='Notification Email Address')
@@ -383,6 +374,10 @@ class Organisation(models.Model):
 
 
 class IngestFile(models.Model):
+    """
+    Removed:
+        completed
+    """
     FILE_SOURCE_CHOICES = (
         ('MON', 'Monash'), ('UOM', 'University of Melbourne'))
     FILE_SOURCE_LOCATION = (
@@ -391,7 +386,6 @@ class IngestFile(models.Model):
         ('M', 'Market'), ('C', 'Computational'), ('V', 'Vault'),
         ('X', 'Mixed'))
     id = models.AutoField(primary_key=True)
-    completed = models.BooleanField()
     file_source = models.CharField(max_length=3, choices=FILE_SOURCE_CHOICES,
                                    null=False)
     file_location = models.SmallIntegerField(null=False,
@@ -407,18 +401,21 @@ class IngestFile(models.Model):
 
 
 class LabelsAlias(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        last_modified
+        updated_by_id
+        active_flag
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
     value = models.CharField(max_length=100,
                              verbose_name='alias literal value')
-    label = models.ForeignKey('Label', models.DO_NOTHING,
+    label = models.ForeignKey('storage.Label', models.DO_NOTHING,
                               related_name='aliased_label',
                               verbose_name='aliased label')
-    source = models.ForeignKey('Label', models.DO_NOTHING,
+    source = models.ForeignKey('storage.Label', models.DO_NOTHING,
                                blank=True, null=True,
                                related_name='alias_source',
                                verbose_name='alias source')
@@ -428,12 +425,15 @@ class LabelsAlias(models.Model):
 
 
 class Label(models.Model):
+    """
+    Removed:
+        creation_date
+        created_by_id
+        last_modified
+        updated_by_id
+        active_flag
+    """
     id = models.AutoField(primary_key=True)
-    creation_date = models.DateField(blank=True, null=True)
-    created_by_id = models.IntegerField(blank=True, null=True)
-    updated_by_id = models.IntegerField(blank=True, null=True)
-    last_modified = models.DateField(blank=True, null=True)
-    active_flag = models.BooleanField()
     value = models.CharField(max_length=250)
     sequence_number = models.IntegerField(default=0)
     application_flag = models.BooleanField(default=False)
