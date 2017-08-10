@@ -205,7 +205,19 @@ and removed the line:
 managed = False
 ```
 
-Then refactored the Model names
+Then refactored the Model names and modified the field definitions.
+
+Then a fake migration of the application model
+
+```bash
+python manage.py makemigrations
+python manage.py migrate --fake-initial
+```
+
+Then updated the model to remove the fields we don't want
+
+
+
 
 
 
