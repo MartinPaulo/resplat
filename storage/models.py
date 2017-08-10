@@ -67,24 +67,32 @@ class CollectionProfile(models.Model):
     migration_assistance_required = models.BooleanField()
     anticipated_growth = models.ForeignKey('Label',
                                            models.DO_NOTHING,
-                                           blank=True, null=True)
+                                           blank=True, null=True,
+                                           related_name='collection_growth')
     created_by_id = models.IntegerField(blank=True, null=True)
     current_storage_medium = models.ForeignKey('Label',
-                                               models.DO_NOTHING, blank=True,
+                                               models.DO_NOTHING,
+                                               related_name='collection_storage_medium',
+                                               blank=True,
                                                null=True)
     estimated_annual_usage = models.ForeignKey('Label',
-                                               models.DO_NOTHING, blank=True,
+                                               models.DO_NOTHING,
+                                               related_name='collection_usage',
+                                               blank=True,
                                                null=True)
     growth_estimate_period = models.ForeignKey('Label',
                                                models.DO_NOTHING, blank=True,
-                                               null=True)
+                                               null=True,
+                                               related_name='collection_growth_period')
     updated_by_id = models.IntegerField(blank=True, null=True)
     user_access_frequency = models.ForeignKey('Label',
                                               models.DO_NOTHING,
-                                              blank=True, null=True)
+                                              blank=True, null=True,
+                                              related_name='collection_access_frequency')
     user_interaction = models.ForeignKey('Label',
                                          models.DO_NOTHING,
-                                         blank=True, null=True)
+                                         blank=True, null=True,
+                                         related_name='collection_user_interaction')
     collection = models.OneToOneField('storage.Project')  # unique=True?
     merit_justification = models.TextField(blank=True, null=True)
     estimated_final_size = models.DecimalField(
@@ -345,11 +353,14 @@ class Organisation(models.Model):
                                                       decimal_places=2)
     operational_center = models.ForeignKey('Label',
                                            models.DO_NOTHING,
+                                           related_name='org_operational_center',
                                            blank=True, null=True)
     operational_staff_petabyte = models.DecimalField(max_digits=5,
                                                      decimal_places=2)
     operational_staff_role = models.ForeignKey('Label',
-                                               models.DO_NOTHING, blank=True,
+                                               models.DO_NOTHING,
+                                               related_name='organisation_ops_role',
+                                               blank=True,
                                                null=True)
     salary_overhead = models.DecimalField(max_digits=5, decimal_places=4)
     weeks_of_annual_holiday = models.DecimalField(max_digits=5,
