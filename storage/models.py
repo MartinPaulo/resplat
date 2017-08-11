@@ -132,14 +132,15 @@ class Domain(models.Model):
         verbose_name='percentage split in decimal')
     collection = models.ForeignKey('storage.Project', models.DO_NOTHING,
                                    related_name='domains')
-    fieldofresearch = models.ForeignKey('FieldOfResearch', models.DO_NOTHING,
-                                        verbose_name='Field of Research',
-                                        related_name='domains')
+    field_of_research = models.ForeignKey('FieldOfResearch', models.DO_NOTHING,
+                                          verbose_name='Field of Research',
+                                          related_name='domains',
+                                          db_column='fieldofresearch')
 
     def __str__(self):
         return " ".join(filter(None, [self.collection.name,
-                                      self.fieldofresearch.code,
-                                      self.fieldofresearch.description]))
+                                      self.field_of_research.code,
+                                      self.field_of_research.description]))
 
     class Meta:
         db_table = 'applications_domain'
@@ -164,7 +165,7 @@ class FieldOfResearch(models.Model):
     class Meta:
         db_table = 'applications_fieldofresearch'
         ordering = ['code']
-        verbose_name_plural = "Fields of Research"
+        verbose_name_plural = "fields of research"
 
 
 class Ingest(models.Model):
@@ -283,7 +284,8 @@ class Request(models.Model):
         limit_choices_to=Q(group__value__exact='Application Status'),
         verbose_name='application status', related_name='application_status')
     institution_faculty = models.ForeignKey(
-        'storage.SubOrganization', models.DO_NOTHING, blank=True, null=True,
+        'storage.Suborganization', models.DO_NOTHING, blank=True,
+        null=True,
         related_name='application_suborganization')
 
     def __str__(self):
@@ -329,7 +331,7 @@ class StorageProduct(models.Model):
         db_table = 'applications_storageproduct'
 
 
-class SubOrganization(models.Model):
+class Suborganization(models.Model):
     """
     Removed:
         creation_date
@@ -451,31 +453,29 @@ class IngestFile(models.Model):
     Removed:
         completed
     """
-    FILE_SOURCE_CHOICES = (
-        ('MON', 'Monash'), ('UOM', 'University of Melbourne'))
-    FILE_SOURCE_LOCATION = (
-        (1, 'Clayton'), (2, 'Queensbury'), (3, 'Noble Park'))
-    FILE_TYPE_CHOICES = (
-        ('M', 'Market'), ('C', 'Computational'), ('V', 'Vault'),
-        ('X', 'Mixed'))
+    SOURCE_CHOICES = (('MON', 'Monash'), ('UOM', 'University of Melbourne'))
+    SOURCE_LOCATIONS = ((1, 'Clayton'), (2, 'Queensbury'), (3, 'Noble Park'))
+    TYPE_CHOICES = (('M', 'Market'), ('C', 'Computational'), ('V', 'Vault'),
+                    ('X', 'Mixed'))
     id = models.AutoField(primary_key=True)
-    file_source = models.CharField(max_length=3, choices=FILE_SOURCE_CHOICES,
-                                   null=False)
-    file_location = models.SmallIntegerField(null=False,
-                                             choices=FILE_SOURCE_LOCATION)
-    file_type = models.CharField(max_length=1, choices=FILE_TYPE_CHOICES,
-                                 null=False)
-    extract_date = models.DateField('Extract creation date',
-                                    editable=False, blank=False, null=False)
-    file_name = models.URLField()
+    source = models.CharField(
+        max_length=3, choices=SOURCE_CHOICES, null=False,
+        db_column='file_source')
+    location = models.SmallIntegerField(
+        null=False, choices=SOURCE_LOCATIONS, db_column='file_location')
+    type = models.CharField(
+        max_length=1, choices=TYPE_CHOICES, null=False, db_column='file_type')
+    extract_date = models.DateField(
+        'Extract creation date', editable=False, blank=False, null=False)
+    url = models.URLField(db_column='file_name')
 
     def __str__(self):
-        return f'{self.extract_date} {self.file_source} ' \
-               f'{self.get_file_location_display()} {self.file_name}'
+        return f'{self.extract_date} {self.source} ' \
+               f'{self.get_location_display()} {self.url}'
 
     class Meta:
         db_table = 'ingest_ingestfile'
-        ordering = ['extract_date', 'file_location']
+        ordering = ['extract_date', 'location']
 
 
 class LabelsAlias(models.Model):
@@ -503,7 +503,7 @@ class LabelsAlias(models.Model):
 
     class Meta:
         db_table = 'labels_alias'
-        verbose_name_plural = "Alias"
+        verbose_name_plural = 'Alias'
         unique_together = ('label', 'value')
         indexes = [models.Index(fields=['label'])]
 

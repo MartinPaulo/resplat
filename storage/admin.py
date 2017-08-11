@@ -2,7 +2,7 @@
 from django.contrib import admin
 
 from .models import Allocation, CollectionProfile, Custodian, Domain, Ingest, \
-    Request, Project, StorageProduct, SubOrganization, Contact, Organisation, \
+    Request, Project, StorageProduct, Suborganization, Contact, Organisation, \
     IngestFile, LabelsAlias, Label, FieldOfResearch
 
 admin.site.register(Allocation)
@@ -13,7 +13,7 @@ admin.site.register(Ingest)
 admin.site.register(Project)
 admin.site.register(Request)
 admin.site.register(StorageProduct)
-admin.site.register(SubOrganization)
+admin.site.register(Suborganization)
 admin.site.register(Contact)
 admin.site.register(Organisation)
 admin.site.register(IngestFile)
