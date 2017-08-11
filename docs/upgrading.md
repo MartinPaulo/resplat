@@ -225,6 +225,18 @@ SELECT MIN(id)
   HAVING COUNT(*) > 1;
 ```
 
+Then need to make sure that the file types and file sources on the ingest
+table are consistent with the code...
+
+```sql
+UPDATE ingest_ingestfile
+SET file_source = upper(file_source);
+
+UPDATE ingest_ingestfile
+SET file_type = upper(file_type);
+```
+
+
 How the migrations were created:
 
 ```bash

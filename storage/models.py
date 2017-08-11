@@ -103,9 +103,10 @@ class Custodian(models.Model):
     collection = models.ForeignKey('storage.Project', models.DO_NOTHING,
                                    related_name='custodians')
     person = models.ForeignKey('storage.Contact', models.DO_NOTHING)
-    role = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                             verbose_name='Custodian Role',
-                             related_name='custodian_role')
+    role = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Custodian Role'),
+        verbose_name='Custodian Role', related_name='custodian_role')
 
     def __str__(self):
         return " ".join(
@@ -192,6 +193,11 @@ class Ingest(models.Model):
         max_digits=15, decimal_places=2, blank=True, null=True,
         verbose_name='replica ingested capacity in GB', default=0)
 
+    @property
+    def ingested_tb(self):
+        "The ingested amount in Terabytes"
+        return self.used_capacity / 1000
+
     def __str__(self):
         return " ".join(filter(None,
                                [self.collection.name,
@@ -256,23 +262,26 @@ class Request(models.Model):
     notes = models.TextField(blank=True, null=True)
     capital_funding_source = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Funding Code'),
         related_name='application_cap_funding_source')
     institution = models.ForeignKey(
         'storage.Organisation', models.DO_NOTHING, blank=True, null=True,
         verbose_name='sponsoring institution',
         related_name='application_institution')
-    node = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                             blank=True, null=True,
-                             verbose_name='target node',
-                             related_name='Application_Node')
-    scheme = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                               blank=True, null=True,
-                               verbose_name='allocation scheme',
-                               related_name='application_allocation_scheme')
-    status = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                               blank=True, null=True,
-                               verbose_name='application status',
-                               related_name='application_status')
+    node = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Node'),
+        blank=True, null=True,
+        verbose_name='target node', related_name='Application_Node')
+    scheme = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Allocation Scheme'),
+        verbose_name='allocation scheme',
+        related_name='application_allocation_scheme')
+    status = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Application Status'),
+        verbose_name='application status', related_name='application_status')
     institution_faculty = models.ForeignKey(
         'storage.SubOrganization', models.DO_NOTHING, blank=True, null=True,
         related_name='application_suborganization')
@@ -300,12 +309,17 @@ class StorageProduct(models.Model):
     capacity = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     raw_conversion_factor = models.DecimalField(max_digits=6, decimal_places=4,
                                                 default=1)
-    product_name = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                                     related_name='storageproduct_name')
-    scheme = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                               related_name='storageproduct_allocation_scheme')
+    product_name = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Storage Product'),
+        related_name='storageproduct_name')
+    scheme = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Allocation Scheme'),
+        related_name='storageproduct_allocation_scheme')
     operational_center = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Operational Center'),
         related_name='storage_product_op_center')
 
     def __str__(self):
@@ -332,6 +346,7 @@ class SubOrganization(models.Model):
 
     class Meta:
         db_table = 'applications_suborganization'
+        verbose_name = 'Suborganization'
 
 
 def validate_orcid(value):
@@ -372,20 +387,19 @@ class Contact(models.Model):
     organisation = models.ForeignKey('storage.Organisation', models.DO_NOTHING,
                                      blank=True, null=True,
                                      related_name='contact_organisation')
-    position = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                                 blank=True, null=True,
-                                 verbose_name='Organisation Position',
-                                 related_name='contact_position')
-    title = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                              blank=True, null=True,
-                              verbose_name='Contact Title',
-                              related_name='contact_title')
+    position = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Position'),
+        verbose_name='Organisation Position', related_name='contact_position')
+    title = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Title'),
+        verbose_name='Contact Title', related_name='contact_title')
 
-    def _get_full_name(self):
+    @property
+    def full_name(self):
         """Returns the person's full name."""
         return " ".join(filter(None, [self.first_name, self.last_name]))
-
-    full_name = property(_get_full_name)
 
     def __str__(self):
         return self.full_name
@@ -416,10 +430,12 @@ class Organisation(models.Model):
     """
     id = models.AutoField(primary_key=True)
     short_name = models.CharField(max_length=20, blank=True, null=True)
-    name = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                             related_name='organisation_name')
-    rifcs_email = models.TextField(blank=True, null=True,
-                                   verbose_name='Notification Email Address')
+    name = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING,
+        limit_choices_to=Q(group__value__exact='Organisation'),
+        related_name='organisation_name')
+    rifcs_email = models.EmailField(blank=True, null=True,
+                                    verbose_name='Notification Email Address')
     ands_url = models.URLField(blank=True, null=True,
                                verbose_name='ANDS Url')
 
@@ -458,6 +474,7 @@ class IngestFile(models.Model):
 
     class Meta:
         db_table = 'ingest_ingestfile'
+        ordering = ['extract_date']
 
 
 class LabelsAlias(models.Model):
@@ -475,10 +492,10 @@ class LabelsAlias(models.Model):
     label = models.ForeignKey('storage.Label', models.DO_NOTHING,
                               related_name='aliased_label',
                               verbose_name='aliased label')
-    source = models.ForeignKey('storage.Label', models.DO_NOTHING,
-                               blank=True, null=True,
-                               related_name='alias_source',
-                               verbose_name='alias source')
+    source = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Alias Source'),
+        related_name='alias_source', verbose_name='alias source')
 
     def __str__(self):
         return self.value
@@ -504,13 +521,15 @@ class Label(models.Model):
     sequence_number = models.IntegerField(default=0)
     application_flag = models.BooleanField(default=False)
     group = models.ForeignKey('self', models.DO_NOTHING, blank=True, null=True,
+                              limit_choices_to=Q(group__value__exact='Label'),
                               related_name='Label_Group',
                               default=1)
     parent = models.ForeignKey('self', models.DO_NOTHING, blank=True,
                                null=True, related_name='Label_Parent')
-    parent_type = models.ForeignKey('self', models.DO_NOTHING, blank=True,
-                                    null=True,
-                                    related_name='Label_Parent_Type')
+    parent_type = models.ForeignKey(
+        'self', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Label'),
+        related_name='Label_Parent_Type')
 
     def __str__(self):
         return self.value
@@ -519,3 +538,4 @@ class Label(models.Model):
         db_table = 'labels_label'
         unique_together = ('value', 'group')
         indexes = [models.Index(fields=['group', 'value'])]
+        ordering = ['id']
