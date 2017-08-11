@@ -83,6 +83,9 @@ class CollectionProfile(models.Model):
         max_digits=15, decimal_places=2,
         verbose_name='estimated collection final size', blank=True, null=True)
 
+    def __str__(self):
+        return self.collection.name
+
     class Meta:
         db_table = 'applications_collectionprofile'
 
@@ -103,6 +106,10 @@ class Custodian(models.Model):
     role = models.ForeignKey('storage.Label', models.DO_NOTHING,
                              verbose_name='Custodian Role',
                              related_name='custodian_role')
+
+    def __str__(self):
+        return " ".join(
+            [self.collection.name, self.person.full_name, self.role.value])
 
     class Meta:
         db_table = 'applications_custodian'
@@ -128,6 +135,11 @@ class Domain(models.Model):
                                         verbose_name='Field of Research',
                                         related_name='domains')
 
+    def __str__(self):
+        return " ".join(filter(None, [self.collection.name,
+                                      self.fieldofresearch.code,
+                                      self.fieldofresearch.description]))
+
     class Meta:
         db_table = 'applications_domain'
 
@@ -145,8 +157,13 @@ class FieldOfResearch(models.Model):
     code = models.CharField(max_length=6, unique=True, verbose_name='for code')
     description = models.CharField(max_length=200, blank=True, null=True)
 
+    def __str__(self):
+        return " ".join([self.code, self.description])
+
     class Meta:
         db_table = 'applications_fieldofresearch'
+        ordering = ['code']
+        verbose_name_plural = "Fields of Research"
 
 
 class Ingest(models.Model):
@@ -175,8 +192,16 @@ class Ingest(models.Model):
         max_digits=15, decimal_places=2, blank=True, null=True,
         verbose_name='replica ingested capacity in GB', default=0)
 
+    def __str__(self):
+        return " ".join(filter(None,
+                               [self.collection.name,
+                                self.storage_product.product_name.value]))
+
     class Meta:
         db_table = 'applications_ingest'
+        unique_together = ('extraction_date', 'collection', 'storage_product')
+        indexes = [models.Index(
+            fields=['collection', 'storage_product', 'extraction_date'])]
 
 
 class Project(models.Model):
@@ -302,6 +327,9 @@ class SubOrganization(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.TextField(verbose_name='faculty')
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         db_table = 'applications_suborganization'
 
@@ -353,6 +381,15 @@ class Contact(models.Model):
                               verbose_name='Contact Title',
                               related_name='contact_title')
 
+    def _get_full_name(self):
+        """Returns the person's full name."""
+        return " ".join(filter(None, [self.first_name, self.last_name]))
+
+    full_name = property(_get_full_name)
+
+    def __str__(self):
+        return self.full_name
+
     class Meta:
         db_table = 'contacts_contact'
 
@@ -386,6 +423,9 @@ class Organisation(models.Model):
     ands_url = models.URLField(blank=True, null=True,
                                verbose_name='ANDS Url')
 
+    def __str__(self):
+        return self.name.value
+
     class Meta:
         db_table = 'contacts_organisation'
 
@@ -413,6 +453,9 @@ class IngestFile(models.Model):
                                     editable=False, blank=False, null=False)
     file_name = models.URLField()
 
+    def __str__(self):
+        return f'{self.file_source}/{self.file_location}/{self.extract_date}/{self.file_name}'
+
     class Meta:
         db_table = 'ingest_ingestfile'
 
@@ -437,8 +480,14 @@ class LabelsAlias(models.Model):
                                related_name='alias_source',
                                verbose_name='alias source')
 
+    def __str__(self):
+        return self.value
+
     class Meta:
         db_table = 'labels_alias'
+        verbose_name_plural = "Alias"
+        unique_together = ('label', 'value')
+        indexes = [models.Index(fields=['label'])]
 
 
 class Label(models.Model):
@@ -468,3 +517,5 @@ class Label(models.Model):
 
     class Meta:
         db_table = 'labels_label'
+        unique_together = ('value', 'group')
+        indexes = [models.Index(fields=['group', 'value'])]

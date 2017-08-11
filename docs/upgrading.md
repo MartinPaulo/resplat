@@ -187,6 +187,44 @@ We leave the labels tables for the time being:
 
 Now down to 15 remaining tables.
 
+The ingest table breaks the django rules about its indexes...
+So run
+
+```sql
+DELETE FROM applications_ingest
+WHERE id IN (
+  SELECT MIN(id)
+  FROM applications_ingest
+  GROUP BY extraction_date, collection_id, storage_product_id
+  HAVING count(*) > 1
+);
+
+-- until following returns the empty set...
+SELECT MIN(id)
+  FROM applications_ingest
+  GROUP BY extraction_date, collection_id, storage_product_id
+  HAVING count(*) > 1;
+```
+
+The labels table breaks the django rules about its indexes...
+So run
+
+```sql
+DELETE FROM labels_label
+WHERE id IN (
+  SELECT MIN(id)
+  FROM labels_label
+  GROUP BY VALUE, group_id
+  HAVING COUNT(*) > 1
+);
+
+-- until following returns the empty set...
+SELECT MIN(id)
+  FROM labels_label
+  GROUP BY VALUE, group_id
+  HAVING COUNT(*) > 1;
+```
+
 How the migrations were created:
 
 ```bash
