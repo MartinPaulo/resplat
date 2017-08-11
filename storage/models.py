@@ -470,11 +470,12 @@ class IngestFile(models.Model):
     file_name = models.URLField()
 
     def __str__(self):
-        return f'{self.file_source}/{self.file_location}/{self.extract_date}/{self.file_name}'
+        return f'{self.extract_date} {self.file_source} ' \
+               f'{self.get_file_location_display()} {self.file_name}'
 
     class Meta:
         db_table = 'ingest_ingestfile'
-        ordering = ['extract_date']
+        ordering = ['extract_date', 'file_location']
 
 
 class LabelsAlias(models.Model):
