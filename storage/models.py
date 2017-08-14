@@ -503,7 +503,8 @@ class LabelsAlias(models.Model):
 
     class Meta:
         db_table = 'labels_alias'
-        verbose_name_plural = 'Alias'
+        verbose_name = 'Label alias'
+        verbose_name_plural = 'Label aliases'
         unique_together = ('label', 'value')
         indexes = [models.Index(fields=['label'])]
 
