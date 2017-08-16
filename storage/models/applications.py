@@ -184,8 +184,9 @@ class Domain(models.Model):
         'storage.Project', models.DO_NOTHING, related_name='domains',
         help_text='the associated collection')
     field_of_research = models.ForeignKey(
-        'FieldOfResearch', models.DO_NOTHING, verbose_name='Field of Research',
-        related_name='domains', db_column='fieldofresearch_id',
+        'FieldOfResearch', models.DO_NOTHING,
+        verbose_name='Field of Research', related_name='domains',
+        db_column='fieldofresearch_id',
         help_text='the field of research')
 
     def __str__(self):
