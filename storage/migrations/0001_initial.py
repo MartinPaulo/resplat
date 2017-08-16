@@ -75,7 +75,7 @@ class Migration(migrations.Migration):
                 ('email_address', models.CharField(blank=True, max_length=75, null=True)),
                 ('business_phone_number', models.CharField(blank=True, max_length=30, null=True)),
                 ('business_email_address', models.CharField(blank=True, max_length=75, null=True)),
-                ('orcid', models.URLField(blank=True, null=True, validators=[storage.models.validate_orcid], verbose_name='ORCID of contact')),
+                ('orcid', models.URLField(blank=True, null=True, validators=[storage.models.contacts.validate_orcid], verbose_name='ORCID of contact')),
             ],
             options={
                 'db_table': 'contacts_contact',
