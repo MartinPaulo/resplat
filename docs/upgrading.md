@@ -236,6 +236,17 @@ UPDATE ingest_ingestfile
 SET file_type = upper(file_type);
 ```
 
+There are a whole pile of storage products with "DO-NOT-USE" in their names.
+And one called: 'Generic Product - Not real'
+Get rid of them...
+
+```sql
+DELETE FROM applications_storageproduct
+WHERE product_name_id IN (77, 78, 79, 80, 100, 101, 411);
+
+DELETE FROM labels_label
+WHERE id IN (77, 78, 79, 80, 100, 101, 411);
+```
 
 How the migrations were created:
 
@@ -243,7 +254,7 @@ How the migrations were created:
 # Get a set of django models for the first ingest
 python manage.py inspectdb > models.py
 ```
-Then ensured each model has an id field:
+Then ensured each model has an id field (this is probably not needed, but): 
 
 ```python
 id = models.AutoField(primary_key=True)
@@ -280,6 +291,40 @@ python manage.py createsuperuser
 
 
 
+## Thoughts on merging tables...
 
+Create new model (C) that represents the two merged old models (A & B).
+Make a normal migration
+If there is one, apply it
+Create a custom migration `python manage.py makemigration --empty storage`
+Edit the file to to do a data migration via code/sql (see below)
+Run `python manage.py migrate` to apply the migration
+Drop the two models A & B
+Generate and run a new migration to get rid of the tables.
 
+So if doing the merge via code, something along the lines of:
+
+```python
+from django.db import migrations
+
+def merge_models(apps, schema_editor):
+    A = apps.get_model('storage', 'A')
+    B = apps.get_model('storage', 'B')
+    C = apps.get_model('storage', 'C')
+    # join A and B, iterate over and insert into C
+    for a in A.objects.all():
+        b = a.b
+        c = C.objects.create()
+        # set c with values from a (and b)
+        c.save()
+    
+class Migrations(migrations.Migration):
+    dependencies = [
+        ('storage', 'the_last_migration'),
+    ]
+    operations = [
+        migrations.RunPython(merge_models),
+    ]
+
+```
 
