@@ -1,4 +1,5 @@
 from django.db import models
+import datetime
 
 
 class IngestFile(models.Model):
@@ -27,6 +28,7 @@ class IngestFile(models.Model):
         help_text='the storage product type covered by the file')
     extract_date = models.DateField(
         'Extract creation date', editable=False, blank=False, null=False,
+        default=datetime.date.today,
         help_text='the date the file was processed')
     url = models.URLField(db_column='file_name',
         help_text='where the file was fetched from')

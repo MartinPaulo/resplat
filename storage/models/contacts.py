@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
+from storage.models.labels import GroupDefaultLabel
+
 
 def validate_orcid(value):
     pattern = re.compile("http://orcid.org/\w{4}-\w{4}-\w{4}-\w{4}")
@@ -64,11 +66,13 @@ class Contact(models.Model):
     position = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Position'),
+        default=GroupDefaultLabel('Position'),
         verbose_name='Organisation Position', related_name='contact_position',
         help_text='the contacts position at that organisation')
     title = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Title'),
+        default=GroupDefaultLabel('Title'),
         verbose_name='Contact Title', related_name='contact_title',
         help_text='the contacts title')
 
@@ -115,10 +119,11 @@ class Organisation(models.Model):
     name = models.ForeignKey(
         'storage.Label', models.DO_NOTHING,
         limit_choices_to=Q(group__value__exact='Organisation'),
+        default=GroupDefaultLabel('Organisation'),
         related_name='organisation_name',
         help_text='the full name for the organisation')
     rifcs_email = models.EmailField(
-        blank=True, null=True, verbose_name='Notification Email Address',
+        blank=True, null=True, verbose_name='Notification email address',
         help_text='the RIFCS contact email address for the organisation')
     ands_url = models.URLField(
         blank=True, null=True, verbose_name='ANDS url',

@@ -1,5 +1,8 @@
 from django.db import models
 from django.db.models import Q
+import datetime
+
+from storage.models.labels import GroupDefaultLabel
 
 
 class Allocation(models.Model):
@@ -26,7 +29,7 @@ class Allocation(models.Model):
     idm_domain = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='IDM Domain'),
-        # default=Label.get_default_label('IDM Domain'),
+        default=GroupDefaultLabel('IDM Domain'),
         related_name='allocation_idm_domain',
         help_text='???')
     idm_identifier = models.CharField(
@@ -43,19 +46,19 @@ class Allocation(models.Model):
     operational_center = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Operational Center'),
-        # default=Label.get_default_label('Operational Center'),
+        default=GroupDefaultLabel('Operational Center'),
         related_name='allocation_op_center',
         help_text='the operational center')
     site = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Data Center'),
-        # default=Label.get_default_label('Data Center'),
+        default=GroupDefaultLabel('Data Center'),
         related_name='allocation_site',
         help_text='the storage site')
     status = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Allocation Status'),
-        # default=Label.get_default_label('Allocation Status'),
+        default=GroupDefaultLabel('Allocation Status'),
         related_name='allocation_status', verbose_name='allocation status',
         help_text='the status of this allocation')
     storage_product = models.ForeignKey(
@@ -118,8 +121,8 @@ class CollectionProfile(models.Model):
         blank=True, null=True,
         help_text='the justification underlying the collection')
     estimated_final_size = models.DecimalField(
-        max_digits=15, decimal_places=2,
-        verbose_name='estimated collection final size', blank=True, null=True,
+        max_digits=15, decimal_places=2, blank=True, null=True,
+        verbose_name='estimated collection final size',
         help_text='estimated final size of collection in gigabytes')
 
     def __str__(self):
@@ -152,6 +155,7 @@ class Custodian(models.Model):
         'storage.Label', models.DO_NOTHING,
         limit_choices_to=Q(group__value__exact='Custodian Role'),
         verbose_name='Custodian Role', related_name='custodian_role',
+        default=GroupDefaultLabel('Custodian Role'),
         help_text='the role of this custodian')
 
     def __str__(self):
@@ -177,7 +181,7 @@ class Domain(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
     split = models.DecimalField(
-        max_digits=5, decimal_places=4, default=0, blank=True, null=True,
+        max_digits=5, decimal_places=4, blank=True, null=True, default=0,
         verbose_name='percentage split in decimal',
         help_text='percentage split of the total field of research allocation')
     collection = models.ForeignKey(
@@ -247,6 +251,7 @@ class Ingest(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
     extraction_date = models.DateField(
+        default=datetime.date.today,
         help_text='the date this data was read')
     allocated_capacity = models.DecimalField(
         max_digits=15, decimal_places=2, blank=True, null=True,
@@ -317,14 +322,16 @@ class Project(models.Model):
         verbose_name='Collection Name',
         help_text='the collection name')
     collective = models.ForeignKey(
-        'storage.Label', models.DO_NOTHING,
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Collective'),
-        blank=True, null=True, related_name='collection_collective',
+        default=GroupDefaultLabel('Collective'),
+        related_name='collection_collective',
         help_text='???')
     status = models.ForeignKey(
-        'storage.Label', models.DO_NOTHING,
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Collection Status'),
-        blank=True, null=True, related_name='collection_status',
+        default=GroupDefaultLabel('Collection Status'),
+        related_name='collection_status',
         help_text='the collection status')
     rifcs_consent = models.BooleanField(
         default=False,
@@ -368,6 +375,7 @@ class Request(models.Model):
     capital_funding_source = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Funding Code'),
+        default=GroupDefaultLabel('Funding Code'),
         related_name='application_cap_funding_source',
         help_text='where the funding for the collection is being sourced from')
     institution = models.ForeignKey(
@@ -378,18 +386,21 @@ class Request(models.Model):
     node = models.ForeignKey(
         'storage.Label', models.DO_NOTHING,
         limit_choices_to=Q(group__value__exact='Node'),
+        default=GroupDefaultLabel('Node'),
         blank=True, null=True,
         verbose_name='target node', related_name='Application_Node',
         help_text='VicNode or not?')
     scheme = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Allocation Scheme'),
+        default=GroupDefaultLabel('Allocation Scheme'),
         verbose_name='allocation scheme',
         related_name='application_allocation_scheme',
         help_text='the scheme to be used for the collection')
     status = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Application Status'),
+        default=GroupDefaultLabel('Application Status'),
         verbose_name='application status', related_name='application_status',
         help_text='where the request is in its lifecycle')
     institution_faculty = models.ForeignKey(
@@ -433,16 +444,19 @@ class StorageProduct(models.Model):
     product_name = models.ForeignKey(
         'storage.Label', models.DO_NOTHING,
         limit_choices_to=Q(group__value__exact='Storage Product'),
+        default=GroupDefaultLabel('Storage Product'),
         related_name='storageproduct_name',
         help_text='the name of this storage product')
     scheme = models.ForeignKey(
         'storage.Label', models.DO_NOTHING,
         limit_choices_to=Q(group__value__exact='Allocation Scheme'),
+        default=GroupDefaultLabel('Allocation Scheme'),
         related_name='storageproduct_allocation_scheme',
         help_text='the allocation scheme for this product')
     operational_center = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Operational Center'),
+        default=GroupDefaultLabel('Operational Center'),
         related_name='storage_product_op_center',
         help_text='this products operational center')
 
