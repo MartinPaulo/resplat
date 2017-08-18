@@ -115,7 +115,6 @@ class CollectionProfile(models.Model):
     id = models.AutoField(primary_key=True, help_text='the primary key')
     collection = models.OneToOneField(
         'storage.Project',
-        # unique=True, # ???
         help_text='the collection associated with this profile')
     merit_justification = models.TextField(
         blank=True, null=True,
