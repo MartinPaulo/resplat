@@ -40,7 +40,7 @@ class Allocation(models.Model):
         blank=True, null=True, related_name='allocations',
         help_text='the original request')
     collection = models.ForeignKey(
-        'storage.Project', models.DO_NOTHING,
+        'storage.Collection', models.DO_NOTHING,
         related_name='allocations',
         help_text='the associated collection')
     operational_center = models.ForeignKey(
@@ -114,7 +114,7 @@ class CollectionProfile(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
     collection = models.OneToOneField(
-        'storage.Project',
+        'storage.Collection',
         help_text='the collection associated with this profile')
     merit_justification = models.TextField(
         blank=True, null=True,
@@ -146,7 +146,7 @@ class Custodian(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
     collection = models.ForeignKey(
-        'storage.Project', models.DO_NOTHING, related_name='custodians',
+        'storage.Collection', models.DO_NOTHING, related_name='custodians',
         help_text='the collection this custodian is associated with')
     person = models.ForeignKey(
         'storage.Contact', models.DO_NOTHING, help_text='the custodian')
@@ -184,7 +184,7 @@ class Domain(models.Model):
         verbose_name='percentage split in decimal',
         help_text='percentage split of the total field of research allocation')
     collection = models.ForeignKey(
-        'storage.Project', models.DO_NOTHING, related_name='domains',
+        'storage.Collection', models.DO_NOTHING, related_name='domains',
         help_text='the associated collection')
     field_of_research = models.ForeignKey(
         'FieldOfResearch', models.DO_NOTHING,
@@ -261,7 +261,7 @@ class Ingest(models.Model):
         verbose_name='ingested capacity in GB',
         help_text='the ingested capacity in GB')
     collection = models.ForeignKey(
-        'storage.Project', models.DO_NOTHING,
+        'storage.Collection', models.DO_NOTHING,
         related_name='ingests',
         help_text='the collection associated with this reading')
     storage_product = models.ForeignKey(
@@ -299,11 +299,12 @@ class Ingest(models.Model):
             fields=['collection', 'storage_product', 'extraction_date'])]
 
 
-class Project(models.Model):
+class Collection(models.Model):
     """
     The collection the data stored belongs to.
 
-    The fields removed from the VicNode table are:
+    Was "Project" in the VicNode system. The fields removed from the VicNode
+    table are:
 
     * creation_date
     * created_by_id

@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Allocation, CollectionProfile, Custodian, Ingest, \
-    Request, Project, StorageProduct, Suborganization, Contact, Organisation, \
+    Request, Collection, StorageProduct, Suborganization, Contact, Organisation, \
     IngestFile, LabelsAlias, Label, FieldOfResearch, Domain
 
 
@@ -130,7 +130,7 @@ class OrganisationAdmin(admin.ModelAdmin):
 
 class ProjectAdminForm(ModelForm):
     class Meta:
-        model = Project
+        model = Collection
         exclude = ()
         widgets = {
             'name': TextInput(attrs={'size': 80})
@@ -187,7 +187,7 @@ class ApplnInline(admin.TabularInline):
     readonly_fields = ('application', 'application_link',)
 
 
-class ProjectAdmin(admin.ModelAdmin):
+class CollectionAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': [('name', 'collective'), 'status', 'rifcs_consent',
                            'overview']}),
@@ -225,7 +225,7 @@ class StorageProductAdmin(admin.ModelAdmin):
 
 class SuborganizationAdminForm(ModelForm):
     class Meta:
-        model = Project
+        model = Collection
         exclude = ()
         widgets = {
             'name': TextInput(attrs={'size': 80})
@@ -239,7 +239,7 @@ class SuborganizationAdmin(admin.ModelAdmin):
 admin.site.register(Allocation, AllocationAdmin)
 admin.site.register(CollectionProfile, CollectionProfileAdmin)
 admin.site.register(Ingest, IngestAdmin)
-admin.site.register(Project, ProjectAdmin)
+admin.site.register(Collection, CollectionAdmin)
 admin.site.register(Request, RequestAdmin)
 admin.site.register(StorageProduct, StorageProductAdmin)
 admin.site.register(Suborganization, SuborganizationAdmin)
