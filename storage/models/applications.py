@@ -403,10 +403,11 @@ class Request(models.Model):
         default=GroupDefaultLabel('Application Status'),
         verbose_name='application status', related_name='application_status',
         help_text='where the request is in its lifecycle')
-    institution_faculty = models.ForeignKey(
+    faculty = models.ForeignKey(
         'storage.Suborganization', models.DO_NOTHING, blank=True, null=True,
+        db_column='faculty_id',
         related_name='application_suborganization',
-        help_text='the UoM Faculty this request belongs to')
+        help_text='the Faculty this request belongs to')
 
     def __str__(self):
         return self.code

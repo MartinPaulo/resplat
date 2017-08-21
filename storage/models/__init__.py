@@ -3,4 +3,13 @@ from .contacts import Organisation
 from .ingest import IngestFile
 from .labels import Label
 from .labels import LabelsAlias
-from .applications import *
+from .applications import Allocation
+from .applications import CollectionProfile
+from .applications import Custodian
+from .applications import Domain
+from .applications import FieldOfResearch
+from .applications import Ingest
+from .applications import Collection
+from .applications import Request
+from .applications import StorageProduct
+from .applications import Suborganization

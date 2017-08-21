@@ -204,7 +204,7 @@ class CollectionAdmin(admin.ModelAdmin):
 
 class RequestAdmin(admin.ModelAdmin):
     fieldsets = [
-        (None, {'fields': ['code', ('institution', 'institution_faculty'),
+        (None, {'fields': ['code', ('institution', 'faculty'),
                            'node', 'scheme', 'application_form',
                            'status', 'notes']}),
         ('Operation',
