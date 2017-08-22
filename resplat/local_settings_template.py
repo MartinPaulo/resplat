@@ -27,9 +27,6 @@ MANAGERS = (
 # SERVER_EMAIL = 'rc-melbourne@nectar.org.au'
 # DEFAULT_FROM_EMAIL = 'rc-melbourne@nectar.org.au'
 
-# enable and point to the static files location
-# STATIC_ROOT = '/var/www/static'
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
