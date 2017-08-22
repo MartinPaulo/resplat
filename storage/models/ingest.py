@@ -1,5 +1,6 @@
-from django.db import models
 import datetime
+
+from django.db import models
 
 
 class IngestFile(models.Model):
@@ -31,11 +32,12 @@ class IngestFile(models.Model):
         default=datetime.date.today,
         help_text='the date the file was processed')
     url = models.URLField(db_column='file_name',
-        help_text='where the file was fetched from')
+                          help_text='where the file was fetched from')
 
     def __str__(self):
-        return f'{self.extract_date} {self.source} ' \
-               f'{self.get_location_display()} {self.url}'
+        return '{ed} {s} {ld} {url}'.format(
+            ed=self.extract_date, s=self.source,
+            ld=self.get_location_display(), url=self.url)
 
     class Meta:
         db_table = 'ingest_ingestfile'
