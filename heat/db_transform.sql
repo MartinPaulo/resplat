@@ -105,53 +105,75 @@ DROP TABLE public.ingest_ingestfilerun CASCADE;
 
 -- now clean the data
 
--- following should be function, rather than a repeated call
-DELETE FROM applications_ingest
-WHERE id IN (
-  SELECT MIN(id)
-  FROM applications_ingest
-  GROUP BY extraction_date, collection_id, storage_product_id
-  HAVING count(*) > 1
-);
+-- The ingest table breaks the django rules about its indexes...
 
-DELETE FROM applications_ingest
-WHERE id IN (
-  SELECT MIN(id)
-  FROM applications_ingest
-  GROUP BY extraction_date, collection_id, storage_product_id
-  HAVING count(*) > 1
-);
+CREATE OR REPLACE FUNCTION clean_ingests() RETURNS VOID AS '
 
-DELETE FROM applications_ingest
-WHERE id IN (
-  SELECT MIN(id)
-  FROM applications_ingest
-  GROUP BY extraction_date, collection_id, storage_product_id
-  HAVING count(*) > 1
-);
+DECLARE id_found INTEGER;
+BEGIN
+  -- has more than one set of identical id
+  LOOP
+    SELECT MIN(id)
+    INTO id_found
+    FROM applications_ingest
+    GROUP BY extraction_date, collection_id, storage_product_id
+    HAVING count(*) > 1;
+    IF id_found IS NULL
+    THEN
+      EXIT;
+    END IF;
+    DELETE FROM applications_ingest
+    WHERE id IN (
+      SELECT MIN(id)
+      FROM applications_ingest
+      GROUP BY extraction_date, collection_id, storage_product_id
+      HAVING count(*) > 1
+    );
+  END LOOP;
+END;'
+LANGUAGE plpgsql;
 
--- following should be function, rather than a repeated call
-DELETE FROM labels_label
-WHERE id IN (
-  SELECT MIN(id)
-  FROM labels_label
-  GROUP BY VALUE, group_id
-  HAVING COUNT(*) > 1
-);
+SELECT clean_ingests();
 
-DELETE FROM labels_label
-WHERE id IN (
-  SELECT MIN(id)
-  FROM labels_label
-  GROUP BY VALUE, group_id
-  HAVING COUNT(*) > 1
-);
+-- The labels table breaks the django rules about its indexes...
+
+CREATE OR REPLACE FUNCTION clean_labels() RETURNS VOID AS '
+
+DECLARE id_found INTEGER;
+BEGIN
+  LOOP
+    SELECT MIN(id)
+    INTO id_found
+    FROM labels_label
+    GROUP BY VALUE, group_id
+    HAVING count(*) > 1;
+    IF id_found IS NULL
+    THEN
+      EXIT;
+    END IF;
+    DELETE FROM labels_label
+    WHERE id IN (
+      SELECT MIN(id)
+      FROM labels_label
+      GROUP BY VALUE, group_id
+      HAVING count(*) > 1
+    );
+  END LOOP;
+END;'
+LANGUAGE plpgsql;
+
+SELECT clean_labels();
+
+-- file type and file source aren't upper case for a lot of records in the
+-- ingest table
 
 UPDATE ingest_ingestfile
 SET file_source = upper(file_source);
 
 UPDATE ingest_ingestfile
 SET file_type = upper(file_type);
+
+-- we have a set of junk storage products, so remove them
 
 DELETE FROM applications_storageproduct
 WHERE product_name_id IN (77, 78, 79, 80, 100, 101, 411);
