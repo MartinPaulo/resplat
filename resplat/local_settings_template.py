@@ -2,16 +2,6 @@
 # local_settings.py is a way for us to have machine specific information
 # if (any)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# if lazy, use https://www.miniwebtool.com/django-secret-key-generator/
-SECRET_KEY = 'replace_me!'
-
-# Debug defaults to False
-DEBUG = False
-# Hence the following allowed hosts will stop the server from running...
-# So you need to set it to be whatever server the software is running on
-ALLOWED_HOSTS = []
-
 # These are the people that email will flow to...
 ADMINS = (
     ('One Admin', 'one.admin@somewhere.edu.au'),
@@ -51,10 +41,10 @@ ENVIRONMENT_COLOR="red"
 # python -m smtpd -n -c DebuggingServer localhost:1025
 # The debugging server will simply print all email sent by the application to
 # the command line.
-if DEBUG:
-    EMAIL_HOST = 'localhost'
-    EMAIL_PORT = 1025
-    EMAIL_HOST_USER = ''
-    EMAIL_HOST_PASSWORD = ''
-    EMAIL_USE_TLS = False
-    DEFAULT_FROM_EMAIL = 'debug@reporting.uom.edu.au'
+# if DEBUG:
+#     EMAIL_HOST = 'localhost'
+#     EMAIL_PORT = 1025
+#     EMAIL_HOST_USER = ''
+#     EMAIL_HOST_PASSWORD = ''
+#     EMAIL_USE_TLS = False
+#     DEFAULT_FROM_EMAIL = 'debug@reporting.uom.edu.au'
