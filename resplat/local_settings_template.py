@@ -34,7 +34,7 @@ ENVIRONMENT_COLOR="red"
 
 # set to wherever you want your static files to live
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
-# STATIC_ROOT = '/var/www/static'
+STATIC_ROOT = '/var/www/static'
 
 # If running in debug mode, this will connect to the python debugging server
 # launched as follows:
