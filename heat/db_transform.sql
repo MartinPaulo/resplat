@@ -162,6 +162,10 @@ BEGIN
 END;'
 LANGUAGE plpgsql;
 
+-- the production data has an issue with this id in the labels alias table
+-- this is a hacky and brute force approach to solving the issue...
+delete from labels_alias where label_id = 673;
+
 SELECT clean_labels();
 
 -- file type and file source aren't upper case for a lot of records in the
