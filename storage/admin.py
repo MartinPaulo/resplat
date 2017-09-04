@@ -6,8 +6,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import Allocation, CollectionProfile, Custodian, Ingest, \
-    Request, Collection, StorageProduct, Suborganization, Contact, Organisation, \
-    IngestFile, LabelsAlias, Label, FieldOfResearch, Domain
+    Request, Collection, StorageProduct, Suborganization, Contact, \
+    Organisation, IngestFile, LabelsAlias, Label, FieldOfResearch, Domain
 
 
 class AllocationAdmin(admin.ModelAdmin):
@@ -25,17 +25,6 @@ class AllocationAdmin(admin.ModelAdmin):
     list_filter = ['status']
     ordering = ['collection__name']
     search_fields = ['collection__name', 'application__code']
-
-
-class CollectionProfileAdmin(admin.ModelAdmin):
-    fieldsets = [
-        (None, {'fields': ['collection']}),
-        ('Merit', {'fields': ['merit_justification', ]}),
-        ('Size', {'fields': ['estimated_final_size', ]}),
-    ]
-    list_display = ('collection',)
-    ordering = ['collection']
-    search_fields = ['collection__name']
 
 
 class ContactAdmin(admin.ModelAdmin):
@@ -187,13 +176,22 @@ class ApplnInline(admin.TabularInline):
     readonly_fields = ('application', 'application_link',)
 
 
+class CollectionProfileInline(admin.TabularInline):
+    model = CollectionProfile
+    classes = ('collapse',)
+    extra = 1
+    fields = ('merit_justification', 'estimated_final_size')
+    max_num = 0
+
+
 class CollectionAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': [('name', 'collective'), 'status', 'rifcs_consent',
                            'overview']}),
     ]
     # IngestInline can return a large amount of rows and hence be very slow
-    inlines = [CustodianInline, ApplnInline, DomainInline, IngestInline, ]
+    inlines = [CustodianInline, ApplnInline, DomainInline, IngestInline,
+               CollectionProfileInline]
     list_display = ('name', 'status')
     list_display_links = ('name',)
     list_filter = ['status', 'collective']
@@ -237,7 +235,6 @@ class SuborganizationAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Allocation, AllocationAdmin)
-admin.site.register(CollectionProfile, CollectionProfileAdmin)
 admin.site.register(Ingest, IngestAdmin)
 admin.site.register(Collection, CollectionAdmin)
 admin.site.register(Request, RequestAdmin)
