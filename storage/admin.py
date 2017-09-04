@@ -147,7 +147,8 @@ class IngestInline(admin.TabularInline):
     fields = (
         'storage_product', 'extraction_date', 'ingest_link', 'used_capacity')
 
-    def ingest_link(self, instance):
+    @staticmethod
+    def ingest_link(instance):
         if instance.pk:
             url = reverse('admin:storage_ingest_change',
                           args=(instance.pk,))
@@ -166,7 +167,8 @@ class ApplnInline(admin.TabularInline):
     max_num = 0
     verbose_name_plural = 'Applications'
 
-    def application_link(self, instance):
+    @staticmethod
+    def application_link(instance):
         if instance.application.id:
             url = reverse('admin:storage_request_change',
                           args=(instance.application_id,))
