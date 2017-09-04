@@ -1,6 +1,10 @@
+import logging
+
 from django.db import models
 from django.db.models import Q
 from django.utils.deconstruct import deconstructible
+
+logger = logging.getLogger(__name__)
 
 
 class LabelsAlias(models.Model):
@@ -54,6 +58,8 @@ class LabelManager(models.Manager):
             group_label = self.get(value__exact=group_value, group=1)
             return self.filter(group=group_label)
         except (Label.DoesNotExist, Label.MultipleObjectsReturned) as e:
+            logger.warning("Group choice with value %s has problem",
+                           group_value, exc_info=1)
             return None
 
     def get_default_label(self, group_value):
@@ -61,7 +67,8 @@ class LabelManager(models.Manager):
         Returns the id of the first label belonging to the group or None
 
         :param group_value: The value of the group label
-        :return: the id of the first group label | None if the group doesn't exist
+        :return: the id of the first group label | None if the group doesn't
+                 exist
 
         .. code-block::
             # example use
@@ -88,6 +95,8 @@ class LabelManager(models.Manager):
         try:
             return self.get(value__exact=group_value, group=1).id
         except (Label.DoesNotExist, Label.MultipleObjectsReturned) as e:
+            logger.warning("Group code with value %s has problem", group_value,
+                           exc_info=1)
             return None
 
 

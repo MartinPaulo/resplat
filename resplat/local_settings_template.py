@@ -29,8 +29,8 @@ DATABASES = {
 }
 
 # Change these to be appropriate for the environment
-ENVIRONMENT_NAME="Production"
-ENVIRONMENT_COLOR="red"
+ENVIRONMENT_NAME = "Production"
+ENVIRONMENT_COLOR = "red"
 
 # set to wherever you want your static files to live
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
