@@ -242,8 +242,9 @@ class CollectionAdmin(admin.ModelAdmin):
     @admin_changelist_link(
         'ingests', 'Ingests',
         query_string=lambda c: 'collection__id__exact={}'.format(c.pk))
-    def ingests_link(self, ingests):
-        return 'For this collection'
+    def ingests_link(self, ingest):
+        total = len(Ingest.objects.filter(collection__id=ingest.instance.id))
+        return '{} for this collection'.format(total)
 
     ordering = ['name']
     search_fields = ['name']
