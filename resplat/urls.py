@@ -20,6 +20,6 @@ admin.site.site_header = 'UoM Storage Management'
 admin.site.site_title = 'UoM Storage'
 
 urlpatterns = [
-    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
-    url(r'^admin/', admin.site.urls),
+    url(r'^resplat/doc/', include('django.contrib.admindocs.urls')),
+    url(r'^resplat/', admin.site.urls),
 ]
