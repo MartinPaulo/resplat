@@ -10,6 +10,64 @@ from .models import Allocation, CollectionProfile, Custodian, Ingest, \
     Organisation, IngestFile, LabelsAlias, Label, FieldOfResearch, Domain
 
 
+def admin_changelist_url(model):
+    app_label = model._meta.app_label
+    model_name = model.__name__.lower()
+    return reverse('admin:{}_{}_changelist'.format(
+        app_label,
+        model_name)
+    )
+
+
+def admin_changelist_link(
+        attr,
+        short_description,
+        empty_description="-",
+        query_string=None
+):
+    """Decorator used for rendering a link to the list display of
+    a related model in the admin detail page.
+
+    attr (str):
+        Name of the related field.
+    short_description (str):
+        Field display name.
+    empty_description (str):
+        Value to display if the related field is None.
+    query_string (function):
+        Optional callback for adding a query string to the link.
+        Receives the object and should return a query string.
+
+    The wrapped method receives the related object and
+    should return the link text.
+
+    Usage:
+        @admin_changelist_link('credit_card', _('Credit Card'))
+        def credit_card_link(self, credit_card):
+            return credit_card.name
+    """
+
+    def wrap(func):
+        def field_func(self, obj):
+            related_obj = getattr(obj, attr)
+            if related_obj is None:
+                return empty_description
+            url = admin_changelist_url(related_obj.model)
+            if query_string:
+                url += '?' + query_string(obj)
+            return format_html(
+                '<a href="{}">{}</a>',
+                url,
+                func(self, related_obj)
+            )
+
+        field_func.short_description = short_description
+        field_func.allow_tags = True
+        return field_func
+
+    return wrap
+
+
 class AllocationAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': ['collection', 'application',
@@ -117,7 +175,7 @@ class OrganisationAdmin(admin.ModelAdmin):
     ordering = ['name']
 
 
-class ProjectAdminForm(ModelForm):
+class CollectionAdminForm(ModelForm):
     class Meta:
         model = Collection
         exclude = ()
@@ -140,25 +198,7 @@ class DomainInline(admin.TabularInline):
     fields = ('field_of_research', 'split')
 
 
-class IngestInline(admin.TabularInline):
-    model = Ingest
-    classes = ('collapse',)
-    extra = 1
-    fields = (
-        'storage_product', 'extraction_date', 'ingest_link', 'used_capacity')
-
-    @staticmethod
-    def ingest_link(instance):
-        if instance.pk:
-            url = reverse('admin:storage_ingest_change',
-                          args=(instance.pk,))
-            return format_html(u'<a href="{}">Link</a>', url)
-        return ''
-
-    readonly_fields = ('ingest_link',)
-
-
-class ApplnInline(admin.TabularInline):
+class ApplicationInline(admin.TabularInline):
     model = Allocation
     can_delete = False
     classes = ('collapse',)
@@ -184,22 +224,30 @@ class CollectionProfileInline(admin.TabularInline):
     extra = 1
     fields = ('merit_justification', 'estimated_final_size')
     max_num = 0
+    verbose_name_plural = 'Collection profile'
 
 
 class CollectionAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': [('name', 'collective'), 'status', 'rifcs_consent',
-                           'overview']}),
+                           'overview', 'ingests_link']}),
     ]
-    # IngestInline can return a large amount of rows and hence be very slow
-    inlines = [CustodianInline, ApplnInline, DomainInline, IngestInline,
+    readonly_fields = ['ingests_link']
+    inlines = [CustodianInline, ApplicationInline, DomainInline,
                CollectionProfileInline]
     list_display = ('name', 'status')
     list_display_links = ('name',)
     list_filter = ['status', 'collective']
+
+    @admin_changelist_link(
+        'ingests', 'Ingests',
+        query_string=lambda c: 'collection__id__exact={}'.format(c.pk))
+    def ingests_link(self, ingests):
+        return 'For this collection'
+
     ordering = ['name']
     search_fields = ['name']
-    form = ProjectAdminForm
+    form = CollectionAdminForm
 
 
 class RequestAdmin(admin.ModelAdmin):
