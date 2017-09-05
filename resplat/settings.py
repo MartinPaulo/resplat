@@ -122,3 +122,25 @@ except ImportError:
     logging.warning("No local_settings file found.")
 
 STATIC_URL = '/static/'
+
+LOGGING = {
+    'version': 1,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        }
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',
+            # uncomment the following line to write sql to console
+            # 'handlers': ['console'],
+        },
+    },
+}
