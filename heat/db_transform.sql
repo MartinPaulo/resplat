@@ -107,7 +107,8 @@ DROP TABLE public.ingest_ingestfilerun CASCADE;
 
 -- The ingest table breaks the django rules about its indexes...
 
-CREATE OR REPLACE FUNCTION clean_ingests() RETURNS VOID AS '
+CREATE OR REPLACE FUNCTION clean_ingests()
+  RETURNS VOID AS '
 
 DECLARE id_found INTEGER;
 BEGIN
@@ -137,7 +138,8 @@ SELECT clean_ingests();
 
 -- The labels table breaks the django rules about its indexes...
 
-CREATE OR REPLACE FUNCTION clean_labels() RETURNS VOID AS '
+CREATE OR REPLACE FUNCTION clean_labels()
+  RETURNS VOID AS '
 
 DECLARE id_found INTEGER;
 BEGIN
@@ -164,7 +166,8 @@ LANGUAGE plpgsql;
 
 -- the production data has an issue with this id in the labels alias table
 -- this is a hacky and brute force approach to solving the issue...
-delete from labels_alias where label_id = 673;
+DELETE FROM labels_alias
+WHERE label_id = 673;
 
 SELECT clean_labels();
 
@@ -184,3 +187,17 @@ WHERE product_name_id IN (77, 78, 79, 80, 100, 101, 411);
 
 DELETE FROM labels_label
 WHERE id IN (77, 78, 79, 80, 100, 101, 411);
+
+-- move the Ballarat requests to Federation University
+
+UPDATE applications_request
+SET institution_id = 8
+WHERE institution_id = 17;
+
+-- move the Ballarat contacts to Federation University
+UPDATE contacts_contact
+SET organisation_id = 8
+WHERE organisation_id = 17;
+
+-- Delete Ballarat from the list of institutions
+DELETE FROM contacts_organisation WHERE short_name = 'Ballarat';
