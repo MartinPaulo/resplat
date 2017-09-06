@@ -1,6 +1,6 @@
 # Register your models here.
 from django.contrib import admin
-from django.db.models import TextField
+from django.db.models import TextField, Max, Min
 from django.forms import ModelForm, TextInput, Textarea
 from django.urls import reverse
 from django.utils.html import format_html
@@ -45,6 +45,8 @@ def admin_changelist_link(
         @admin_changelist_link('credit_card', _('Credit Card'))
         def credit_card_link(self, credit_card):
             return credit_card.name
+    See:
+        https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614
     """
 
     def wrap(func):
@@ -228,6 +230,9 @@ class CollectionProfileInline(admin.TabularInline):
 
 
 class CollectionAdmin(admin.ModelAdmin):
+    """
+    https://medium.com/@hakibenita/how-to-turn-django-admin-into-a-lightweight-dashboard-a0e0bbf609ad
+    """
     fieldsets = [
         (None, {'fields': [('name', 'collective'), 'status', 'rifcs_consent',
                            'overview', 'ingests_link']}),
@@ -248,7 +253,30 @@ class CollectionAdmin(admin.ModelAdmin):
 
     ordering = ['name']
     search_fields = ['name']
-    form = CollectionAdminForm
+    change_form_template = 'admin/collection.html'
+
+    def changeform_view(self, request, object_id=None, form_url='',
+                        extra_context=None):
+        response = super().changeform_view(
+            request, object_id=object_id, form_url=form_url,
+            extra_context=extra_context)
+        try:
+            qs = response.context_data['original'].ingests.all()
+        except (AttributeError, KeyError):
+            return response
+        if len(qs):
+            summary_range = qs.aggregate(low=Min('used_capacity'),
+                                         high=Max('used_capacity'))
+            high = summary_range.get('high', 0)
+            low = summary_range.get('low', 0)
+            response.context_data['list_over_time'] = [{
+                'extraction_date': x['extraction_date'],
+                'used_capacity': x['used_capacity'] or 0,
+                'pct': ((x['used_capacity'] or 0) - low) / (
+                    high - low) * 100 if high > low else 0,
+            } for x in qs.values().order_by('-extraction_date') if
+                x['used_capacity'] > 0]
+        return response
 
 
 class RequestAdmin(admin.ModelAdmin):
