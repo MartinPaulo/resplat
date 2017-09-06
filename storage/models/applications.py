@@ -1,6 +1,7 @@
+import datetime
+
 from django.db import models
 from django.db.models import Q
-import datetime
 
 from storage.models.labels import GroupDefaultLabel
 
