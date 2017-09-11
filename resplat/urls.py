@@ -16,10 +16,13 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 
+from resplat import views
+
 admin.site.site_header = 'UoM Storage Management'
 admin.site.site_title = 'UoM Storage'
 
 urlpatterns = [
     url(r'^resplat/doc/', include('django.contrib.admindocs.urls')),
     url(r'^resplat/', admin.site.urls),
+    url(r'^$', views.index, name='index')
 ]
