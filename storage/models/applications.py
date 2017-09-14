@@ -1,9 +1,64 @@
 import datetime
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q
 
 from storage.models.labels import GroupDefaultLabel
+
+
+class AccessLayer(models.Model):
+    """
+    The manner in which the data is to be accessed.
+
+    The fields removed from the VicNode table are:
+
+    * creation_date
+    * created_by_id
+    * updated_by_id
+    * last_modified
+    * active_flag
+
+    """
+    id = models.AutoField(primary_key=True, help_text='the primary key')
+    description = models.CharField(
+        max_length=200, blank=False, null=False,
+        help_text='the manner in which the data is to be accessed')
+    source = models.ForeignKey(
+        'storage.Label', models.DO_NOTHING, blank=True, null=True,
+        limit_choices_to=Q(group__value__exact='Access Layer Source'),
+        default=GroupDefaultLabel('Access Layer Source'),
+        related_name='access_layer',
+        help_text='the access layer source')
+
+    def __str__(self):
+        return self.description
+
+    class Meta:
+        db_table = 'applications_accesslayer'
+
+
+class AccessLayerMember(models.Model):
+    """
+    A new table to bridge teh
+
+    """
+    id = models.AutoField(primary_key=True, help_text='the primary key')
+    collection = models.ForeignKey(
+        'storage.Collection', related_name='collections',
+        help_text='the collection this access layer is associated with',
+        default=1)
+    accesslayer = models.ForeignKey(
+        'storage.AccessLayer', models.DO_NOTHING, related_name='accesslayer',
+        help_text='the access layer this collection is associated with',
+        default=1)
+
+    def __str__(self):
+        return " ".join(
+            [self.collection.name, self.accesslayer.description])
+
+    class Meta:
+        db_table = 'access_layer_member'
 
 
 class Allocation(models.Model):
@@ -147,7 +202,7 @@ class Custodian(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
     collection = models.ForeignKey(
-        'storage.Collection', models.DO_NOTHING, related_name='custodians',
+        'storage.Collection', related_name='custodians',
         help_text='the collection this custodian is associated with')
     person = models.ForeignKey(
         'storage.Contact', models.DO_NOTHING, help_text='the custodian')
@@ -185,7 +240,7 @@ class Domain(models.Model):
         verbose_name='percentage split in decimal',
         help_text='percentage split of the total field of research allocation')
     collection = models.ForeignKey(
-        'storage.Collection', models.DO_NOTHING, related_name='domains',
+        'storage.Collection', related_name='domains',
         help_text='the associated collection')
     field_of_research = models.ForeignKey(
         'FieldOfResearch', models.DO_NOTHING,

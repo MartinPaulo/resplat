@@ -5,6 +5,8 @@ from django.forms import ModelForm, TextInput, Textarea
 from django.urls import reverse
 from django.utils.html import format_html
 
+from storage.filters import RelatedDropDownFilter
+from storage.models.applications import AccessLayer, AccessLayerMember
 from .models import Allocation, CollectionProfile, Custodian, Ingest, \
     Request, Collection, StorageProduct, Suborganization, Contact, \
     Organisation, IngestFile, LabelsAlias, Label, FieldOfResearch, Domain
@@ -70,6 +72,11 @@ def admin_changelist_link(
     return wrap
 
 
+class AccessLayerAdmin(admin.ModelAdmin):
+    fields = ('description', 'source')
+    ordering = ['description']
+
+
 class AllocationAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': ['collection', 'application',
@@ -97,7 +104,8 @@ class ContactAdmin(admin.ModelAdmin):
             'phone_number', 'mobile_number', 'email_address']}),
     ]
     list_display = ('full_name', 'organisation', 'position')
-    list_filter = ['organisation', 'position']
+    list_filter = [('organisation', RelatedDropDownFilter),
+                   ('position', RelatedDropDownFilter)]
     ordering = ['last_name', 'first_name']
     search_fields = ['first_name', 'last_name']
 
@@ -119,7 +127,9 @@ class IngestAdmin(admin.ModelAdmin):
     list_display = ('storage_product', 'extraction_date', 'collection',
                     'allocated_capacity', 'used_capacity')
     list_display_links = ('storage_product', 'extraction_date', 'collection',)
-    list_filter = ['collection', 'storage_product', 'extraction_date']
+    list_filter = [('collection', RelatedDropDownFilter),
+                   ('storage_product', RelatedDropDownFilter),
+                   'extraction_date']
     search_fields = ['collection__name']
     ordering = ['collection', 'storage_product', '-extraction_date']
     readonly_fields = ('ingested_raw_tb',)
@@ -149,7 +159,7 @@ class LabelAdmin(admin.ModelAdmin):
     inlines = [AliasInline]
     list_display = ('group', 'sequence_number', 'value', 'parent')
     list_display_links = ('group', 'value')
-    list_filter = ['group']
+    list_filter = [('group', RelatedDropDownFilter)]
     search_fields = ['value', 'aliased_label__value']
     ordering = ['group', 'sequence_number', 'value']
 
@@ -184,6 +194,13 @@ class CollectionAdminForm(ModelForm):
         widgets = {
             'name': TextInput(attrs={'size': 80})
         }
+
+
+class AccessLayerMemberInline(admin.TabularInline):
+    model = AccessLayerMember
+    classes = ('collapse',)
+    extra = 1
+    fields = ('accesslayer',)
 
 
 class CustodianInline(admin.TabularInline):
@@ -239,7 +256,7 @@ class CollectionAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ['ingests_link']
     inlines = [CustodianInline, ApplicationInline, DomainInline,
-               CollectionProfileInline]
+               CollectionProfileInline, AccessLayerMemberInline]
     list_display = ('name', 'status')
     list_display_links = ('name',)
     list_filter = ['status', 'collective']
@@ -279,18 +296,45 @@ class CollectionAdmin(admin.ModelAdmin):
         return response
 
 
+class AllocationInline(admin.TabularInline):
+    model = Allocation
+    extra = 1
+    fields = (
+        'storage_product', 'alloc_link', 'size', 'coll_link', 'collection')
+
+    @staticmethod
+    def coll_link(instance):
+        if instance.pk:
+            url = reverse('admin:storage_collection_change',
+                          args=(instance.collection.pk,))
+            return format_html(u'<a href="{}">Link</a>', url)
+        return ''
+
+    @staticmethod
+    def alloc_link(instance):
+        if instance.pk:
+            url = reverse('admin:storage_allocation_change',
+                          args=(instance.pk,))
+            return format_html(u'<a href="{}">Link</a>', url)
+        return ''
+
+    readonly_fields = ('alloc_link', 'coll_link',)
+
+
 class RequestAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': ['code', ('institution', 'faculty'),
                            'node', 'scheme', 'application_form',
                            'status', 'notes']}),
         ('Operation',
-         {'fields': ['capital_funding_source', ], }),
+         {'fields': ['capital_funding_source', ], 'classes': ['collapse']}),
     ]
     list_display = ('code', 'institution', 'scheme', 'status')
-    list_filter = ['institution', 'scheme', 'status']
+    list_filter = [('institution', RelatedDropDownFilter),
+                   ('scheme', RelatedDropDownFilter), 'status']
     search_fields = ['code']
     ordering = ['code']
+    inlines = [AllocationInline, ]
 
 
 class StorageProductAdmin(admin.ModelAdmin):
@@ -313,6 +357,7 @@ class SuborganizationAdmin(admin.ModelAdmin):
     form = SuborganizationAdminForm
 
 
+admin.site.register(AccessLayer, AccessLayerAdmin)
 admin.site.register(Allocation, AllocationAdmin)
 admin.site.register(Ingest, IngestAdmin)
 admin.site.register(Collection, CollectionAdmin)

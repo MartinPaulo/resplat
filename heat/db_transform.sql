@@ -1,3 +1,28 @@
+
+-- Set up our access layer mapping table
+CREATE TABLE public.access_layer_member (
+  id             SERIAL PRIMARY KEY NOT NULL,
+  collection_id  INT                NOT NULL REFERENCES applications_project (id),
+  accesslayer_id INT                NOT NULL REFERENCES applications_accesslayer (id),
+  UNIQUE (collection_id, accesslayer_id)
+);
+
+CREATE UNIQUE INDEX access_layer_member_ix_collection_access_layer
+  ON access_layer_member (collection_id, accesslayer_id);
+
+-- will have to pass the owner in?
+ALTER TABLE public.access_layer_member OWNER to vicnode_prd;
+
+INSERT INTO access_layer_member (collection_id, accesslayer_id)
+SELECT DISTINCT
+  applications_collectionuse.collection_id,
+  access_layer_id
+FROM public.applications_interface AS ai
+  LEFT JOIN public.applications_collectionuse
+    ON ai.collection_id = applications_collectionuse.id
+  LEFT JOIN public.applications_accesslayer
+    ON ai.access_layer_id = applications_accesslayer.id;
+
 -- Table ordering matters
 DROP TABLE public.corsheaders_corsmodel;
 
@@ -78,7 +103,7 @@ DROP TABLE public.contacts_identity CASCADE;
 DROP TABLE public.contacts_membership CASCADE;
 
 -- drop the applications tables we aren't going to use
-DROP TABLE public.applications_accesslayer CASCADE;
+-- DROP TABLE public.applications_accesslayer CASCADE;
 DROP TABLE public.applications_action CASCADE;
 DROP TABLE public.applications_applicationaction CASCADE;
 DROP TABLE public.applications_categorisation CASCADE;
@@ -194,6 +219,10 @@ UPDATE applications_request
 SET institution_id = 8
 WHERE institution_id = 17;
 
+UPDATE applications_request
+SET operational_funding_source_id = 8
+WHERE operational_funding_source_id = 17;
+
 -- move the Ballarat contacts to Federation University
 UPDATE contacts_contact
 SET organisation_id = 8
@@ -201,3 +230,5 @@ WHERE organisation_id = 17;
 
 -- Delete Ballarat from the list of institutions
 DELETE FROM contacts_organisation WHERE short_name = 'Ballarat';
+
+-- We need to set up our applications access layer table
