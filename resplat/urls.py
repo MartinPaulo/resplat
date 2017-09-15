@@ -18,8 +18,9 @@ from django.contrib import admin
 
 from resplat import views
 
-admin.site.site_header = 'UoM Storage Management'
-admin.site.site_title = 'UoM Storage'
+admin.site.site_title = 'UoM Storage'  # ordinarily 'Django Administration'
+admin.site.site_header = 'UoM Storage Management'  # 'Django Administration'
+admin.site.index_title = 'Administration'  # ordinarily 'Site administration'
 
 urlpatterns = [
     url(r'^resplat/doc/', include('django.contrib.admindocs.urls')),
