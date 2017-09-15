@@ -5,7 +5,7 @@ from django.forms import ModelForm, TextInput, Textarea
 from django.urls import reverse
 from django.utils.html import format_html
 
-from storage.filters import RelatedDropDownFilter
+from storage.filters import RelatedDropDownFilter, FieldOfResearchFilter
 from storage.models.applications import AccessLayer, AccessLayerMember
 from .models import Allocation, CollectionProfile, Custodian, Ingest, \
     Request, Collection, StorageProduct, Suborganization, Contact, \
@@ -114,6 +114,7 @@ class FieldOfResearchAdmin(admin.ModelAdmin):
     fields = ('code', 'description')
     list_display = ('code', 'description')
     ordering = ['code']
+    list_filter = (FieldOfResearchFilter,)
 
 
 class IngestAdmin(admin.ModelAdmin):
@@ -202,6 +203,15 @@ class AccessLayerMemberInline(admin.TabularInline):
     extra = 1
     fields = ('accesslayer',)
 
+    # We want to remove the ability add/change/delete the related fields...
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super(AccessLayerMemberInline, self).formfield_for_dbfield(
+            db_field, **kwargs)
+        if db_field.name in ('accesslayer',):
+            field.widget.can_add_related = False
+            field.widget.can_delete_related = False
+        return field
+
 
 class CustodianInline(admin.TabularInline):
     model = Custodian
@@ -209,12 +219,31 @@ class CustodianInline(admin.TabularInline):
     extra = 1
     fields = ('person', 'role')
 
+    # We want to remove the ability add/change/delete the related fields...
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super(CustodianInline, self).formfield_for_dbfield(db_field,
+                                                                   **kwargs)
+        if db_field.name in ('person', 'role'):
+            field.widget.can_add_related = False
+            field.widget.can_delete_related = False
+        return field
+
 
 class DomainInline(admin.TabularInline):
     model = Domain
     classes = ('collapse',)
     extra = 1
     fields = ('field_of_research', 'split')
+
+    # We want to remove the ability add/change/delete the related fields...
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super(DomainInline, self).formfield_for_dbfield(db_field,
+                                                                **kwargs)
+        if db_field.name in ('field_of_research', 'split'):
+            field.widget.can_add_related = False
+            field.widget.can_change_related = False
+            field.widget.can_delete_related = False
+        return field
 
 
 class ApplicationInline(admin.TabularInline):
@@ -319,6 +348,15 @@ class AllocationInline(admin.TabularInline):
         return ''
 
     readonly_fields = ('alloc_link', 'coll_link',)
+
+    # We want to remove the ability add/change/delete the related fields...
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super(AllocationInline, self).formfield_for_dbfield(db_field,
+                                                                    **kwargs)
+        if db_field.name in ('storage_product', 'collection'):
+            field.widget.can_add_related = False
+            field.widget.can_delete_related = False
+        return field
 
 
 class RequestAdmin(admin.ModelAdmin):
