@@ -115,6 +115,20 @@ class FieldOfResearchAdmin(admin.ModelAdmin):
     list_display = ('code', 'description')
     ordering = ['code']
     list_filter = (FieldOfResearchFilter,)
+    readonly_fields = ('code', 'description',)
+    actions = None
+
+    def has_add_permission(self, request):
+        # don't want user to add new ones...
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # or delete existing ones...
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # or even see the complete list of FOR codes
+        return False
 
 
 class IngestAdmin(admin.ModelAdmin):
