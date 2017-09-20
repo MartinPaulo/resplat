@@ -1,4 +1,3 @@
-
 -- Set up our access layer mapping table
 CREATE TABLE public.access_layer_member (
   id             SERIAL PRIMARY KEY NOT NULL,
@@ -11,17 +10,18 @@ CREATE UNIQUE INDEX access_layer_member_ix_collection_access_layer
   ON access_layer_member (collection_id, accesslayer_id);
 
 -- will have to pass the owner in?
-ALTER TABLE public.access_layer_member OWNER to vicnode_prd;
+ALTER TABLE public.access_layer_member
+  OWNER TO vicnode_prd;
 
 INSERT INTO access_layer_member (collection_id, accesslayer_id)
-SELECT DISTINCT
-  applications_collectionuse.collection_id,
-  access_layer_id
-FROM public.applications_interface AS ai
-  LEFT JOIN public.applications_collectionuse
-    ON ai.collection_id = applications_collectionuse.id
-  LEFT JOIN public.applications_accesslayer
-    ON ai.access_layer_id = applications_accesslayer.id;
+  SELECT DISTINCT
+    applications_collectionuse.collection_id,
+    access_layer_id
+  FROM public.applications_interface AS ai
+    LEFT JOIN public.applications_collectionuse
+      ON ai.collection_id = applications_collectionuse.id
+    LEFT JOIN public.applications_accesslayer
+      ON ai.access_layer_id = applications_accesslayer.id;
 
 -- Table ordering matters
 DROP TABLE public.corsheaders_corsmodel;
@@ -229,6 +229,97 @@ SET organisation_id = 8
 WHERE organisation_id = 17;
 
 -- Delete Ballarat from the list of institutions
-DELETE FROM contacts_organisation WHERE short_name = 'Ballarat';
+DELETE FROM contacts_organisation
+WHERE short_name = 'Ballarat';
 
--- We need to set up our applications access layer table
+-- clean up non UoM projects...
+-- As promised, any collection with the following nomenclature in its ID can be removed
+--
+-- RDS – RITP-XXX (I believe there are 35) – this is all of the LARDS archive migrated collective
+-- MURDA-XXX  (there are around 233) – this is all of the MURDA collective
+-- 2016MONXXXX (I think there are only 3)
+-- Anything under Monash Internal Tenancy (RDSM)
+
+-- Anything else can stay for the time being in case we have incorrectly labelled things
+
+DELETE FROM applications_ingest
+WHERE collection_id IN (
+  SELECT DISTINCT collection_id
+  FROM applications_request
+    LEFT JOIN applications_allocation
+      ON applications_request.id = applications_allocation.application_id
+  WHERE code LIKE 'RDS-RITP%' OR code LIKE '2016MON%' OR code LIKE 'MURDA-%' OR
+        code LIKE 'RDSM%'
+) AND collection_id != 81;
+
+DELETE FROM applications_custodian
+WHERE collection_id IN (
+  SELECT DISTINCT collection_id
+  FROM applications_request
+    LEFT JOIN applications_allocation
+      ON applications_request.id = applications_allocation.application_id
+  WHERE code LIKE 'RDS-RITP%' OR code LIKE '2016MON%' OR code LIKE 'MURDA-%' OR
+        code LIKE 'RDSM%'
+) AND collection_id != 81;
+
+DELETE FROM applications_collectionprofile
+WHERE collection_id IN (
+  SELECT DISTINCT collection_id
+  FROM applications_request
+    LEFT JOIN applications_allocation
+      ON applications_request.id = applications_allocation.application_id
+  WHERE code LIKE 'RDS-RITP%' OR code LIKE '2016MON%' OR code LIKE 'MURDA-%' OR
+        code LIKE 'RDSM%'
+) AND collection_id != 81;
+
+
+DELETE FROM applications_domain
+WHERE collection_id IN (
+  SELECT DISTINCT collection_id
+  FROM applications_request
+    LEFT JOIN applications_allocation
+      ON applications_request.id = applications_allocation.application_id
+  WHERE code LIKE 'RDS-RITP%' OR code LIKE '2016MON%' OR code LIKE 'MURDA-%' OR
+        code LIKE 'RDSM%'
+) AND collection_id != 81;
+
+DELETE FROM access_layer_member
+WHERE collection_id IN (
+  SELECT DISTINCT collection_id
+  FROM applications_request
+    LEFT JOIN applications_allocation
+      ON applications_request.id = applications_allocation.application_id
+  WHERE code LIKE 'RDS-RITP%' OR code LIKE '2016MON%' OR code LIKE 'MURDA-%' OR
+        code LIKE 'RDSM%'
+) AND collection_id != 81;
+
+ALTER TABLE public.applications_allocation
+  DROP CONSTRAINT applications_allocat_collection_id_35d4d1f8_fk_applicati,
+  ADD CONSTRAINT applications_allocat_collection_id_35d4d1f8_fk_applicati
+FOREIGN KEY (collection_id)
+REFERENCES applications_project
+ON DELETE CASCADE;
+
+DELETE FROM applications_project
+WHERE id IN (
+  SELECT DISTINCT collection_id
+  FROM applications_request
+    LEFT JOIN applications_allocation
+      ON applications_request.id = applications_allocation.application_id
+  WHERE code LIKE 'RDS-RITP%' OR code LIKE '2016MON%' OR code LIKE 'MURDA-%' OR
+        code LIKE 'RDSM%'
+) AND id != 81;
+
+DELETE FROM applications_request
+WHERE (code LIKE 'RDS-RITP%' OR code LIKE '2016MON%' OR code LIKE 'MURDA-%' OR
+       code LIKE 'RDSM%') AND id != 922;
+
+-- Reveal our problem child...
+-- SELECT *
+-- FROM applications_request
+-- WHERE id = 922;
+
+
+-- can now delete labels no longer used...
+
+
