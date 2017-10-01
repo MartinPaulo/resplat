@@ -1,6 +1,8 @@
 # Register your models here.
+import logging
+
 from django.contrib import admin
-from django.db.models import TextField, Max, Min
+from django.db.models import TextField, Q
 from django.forms import ModelForm, TextInput, Textarea
 from django.urls import reverse
 from django.utils.html import format_html
@@ -10,6 +12,8 @@ from storage.models.applications import AccessLayer, AccessLayerMember
 from .models import Allocation, CollectionProfile, Custodian, Ingest, \
     Request, Collection, StorageProduct, Suborganization, Contact, \
     Organisation, IngestFile, LabelsAlias, Label, FieldOfResearch, Domain
+
+logger = logging.getLogger(__name__)
 
 
 def admin_changelist_url(model):
@@ -292,28 +296,43 @@ class CollectionProfileInline(admin.TabularInline):
 class CollectionAdmin(admin.ModelAdmin):
     """
     https://medium.com/@hakibenita/how-to-turn-django-admin-into-a-lightweight-dashboard-a0e0bbf609ad
+
+    =======
+    Storage types
+    == ====
+    1  Computational.Melbourne
+    3  Computational.Monash.Performance
+    4  Market.Melbourne
+    6  Market.Monash
+    10 Vault.Melbourne
+    11 Vault.Monash
+    14 Market.Monash.Object
+    22 Market.Monash.File
+    23  Market.Melbourne.Mediaflux
+    24  Market.Melbourne.Gluster
+    == ====
+
     """
     fieldsets = [
         (None, {'fields': [('name', 'collective'), 'status', 'rifcs_consent',
                            'overview', 'ingests_link']}),
     ]
-    readonly_fields = ['ingests_link']
     inlines = [CustodianInline, ApplicationInline, DomainInline,
                CollectionProfileInline, AccessLayerMemberInline]
+    change_form_template = 'admin/collection.html'
     list_display = ('name', 'status')
     list_display_links = ('name',)
     list_filter = ['status', 'collective']
+    ordering = ['name']
+    readonly_fields = ['ingests_link']
+    search_fields = ['name']
 
     @admin_changelist_link(
         'ingests', 'Ingests',
         query_string=lambda c: 'collection__id__exact={}'.format(c.pk))
     def ingests_link(self, ingest):
-        total = len(Ingest.objects.filter(collection__id=ingest.instance.id))
-        return '{} for this collection'.format(total)
-
-    ordering = ['name']
-    search_fields = ['name']
-    change_form_template = 'admin/collection.html'
+        num = Ingest.objects.filter(collection__id=ingest.instance.id).count()
+        return '{} for this collection'.format(num)
 
     def changeform_view(self, request, object_id=None, form_url='',
                         extra_context=None):
@@ -321,21 +340,21 @@ class CollectionAdmin(admin.ModelAdmin):
             request, object_id=object_id, form_url=form_url,
             extra_context=extra_context)
         try:
-            qs = response.context_data['original'].ingests.all()
+            qs = response.context_data['original'].ingests.filter(
+                Q(used_capacity__gt=0)).order_by('extraction_date')
+            if qs.count():
+                # can have multiple entries on the same date, as each storage
+                # product used will have a separate value.
+                # no need to gather used replica...
+                # Todo: turn this into json here...
+                response.context_data['ingests_over_time'] = [{
+                    'storage_product': x['storage_product_id'],
+                    'extraction_date': x['extraction_date'],
+                    'allocated_capacity': x['allocated_capacity'] or 0,
+                    'used_capacity': x['used_capacity'] or 0,
+                } for x in qs.values()]
         except (AttributeError, KeyError):
-            return response
-        if len(qs):
-            summary_range = qs.aggregate(low=Min('used_capacity'),
-                                         high=Max('used_capacity'))
-            high = summary_range.get('high', 0)
-            low = summary_range.get('low', 0)
-            response.context_data['list_over_time'] = [{
-                'extraction_date': x['extraction_date'],
-                'used_capacity': x['used_capacity'] or 0,
-                'pct': ((x['used_capacity'] or 0) - low) / (
-                    high - low) * 100 if high > low else 0,
-            } for x in qs.values().order_by('-extraction_date') if
-                x['used_capacity'] > 0]
+            logger.exception("Unexpected error on fetching ingests")
         return response
 
 

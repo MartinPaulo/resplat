@@ -1,74 +1,141 @@
 {% extends 'admin/change_form.html' %}
 
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css"
+          href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.css"/>
+{% endblock %}
+
 {% block content_title %}
     <h1>Change my collection</h1>
 {% endblock %}
 
 {% block after_field_sets %}
-    {% if list_over_time %}
-        <style>
-            .bar-chart {
-                display: flex;
-                justify-content: space-around;
-                height: 160px;
-                padding-top: 60px;
-                overflow: hidden;
-            }
+    {% if ingests_over_time %}
+        <div id='chart' class='chart-wrapper'>
+            <svg></svg>
+        </div>
+        <script src="//d3js.org/d3.v3.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.js"></script>
+        <script>
+            'use strict';
+            let delimiter = '';
+            let jsonString = "[ ";
+            let line;
+            {% for x in ingests_over_time %}
+                line = delimiter;
+                line += "{\"allocated_capacity\": \"{{ x.allocated_capacity }}\", ";
+                line += "\"used_capacity\":{{ x.used_capacity }}, ";
+                line += "\"storage_product\":{{ x.storage_product }}, ";
+                line += "\"extraction_date\": \"{{ x.extraction_date | date:"Y-m-d"}}\" }";
+                jsonString += line;
+                delimiter = ', ';
+            {% endfor %}
+            jsonString += " ]";
+            let dayList = [];
+            let used = [];
+            let allocated = [];
+            JSON.parse(jsonString).forEach((elem) => {
+                const day = elem['extraction_date'];
+                // we don't want duplicate dates...
+                if (dayList[dayList.length - 1] !== day) {
+                    dayList.push(day);
+                }
 
-            .bar-chart .bar {
-                flex: 100%;
-                align-self: flex-end;
-                margin-right: 2px;
-                position: relative;
-                background-color: #79aec8;
-            }
+                function recordElement(target, key) {
+                    if (!target[elem['storage_product']]) {
+                        target[elem['storage_product']] = [];
+                    }
+                    target[elem['storage_product']].push({
+                        x: dayList.length,
+                        y: elem[key]
+                    });
+                }
 
-            .bar-chart .bar:last-child {
-                margin: 0;
-            }
+                recordElement(used, 'used_capacity');
+                recordElement(allocated, 'allocated_capacity');
+            });
+            // colours from d3.scale.category20c ...
+            const colours = [3244733, 7057110, 10406625, 13032431, 15095053,
+                16616764, 16625259, 16634018, 3253076, 7652470, 10607003,
+                13101504, 7695281, 10394312, 12369372, 14342891, 6513507,
+                9868950, 12434877, 14277081].map(x => d3.rgb("#" + x.toString(16)));
+            let storageProducts = [];
+            storageProducts[1] = {name: 'Computational', c1: 2, c2: 0};
+            storageProducts[4] = {name: 'Market', c1: 6, c2: 4};
+            storageProducts[10] = {name: 'Vault', c1: 10, c2: 8};
+            storageProducts[23] = {name: 'Market Mediaflux', c1: 14, c2: 12};
+            storageProducts[24] = {name: 'Market Gluster', c1: 18, c2: 16};
+            storageProducts[3] = {name: 'Computational.Monash', c1: 1, c2: 3};
+            storageProducts[6] = {name: 'Market.Monash', c1: 7, c2: 5};
+            storageProducts[11] = {name: 'Vault.Monash', c1: 11, c2: 9};
+            storageProducts[14] = {name: 'Market.Monash.Obj.', c1: 15, c2: 13};
+            storageProducts[22] = {name: 'Market.Monash.File', c1: 19, c2: 17};
 
-            .bar-chart .bar:hover {
-                background-color: #417690;
-            }
+            let data = [];
+            storageProducts.forEach((settings, index) => {
+                if (used[index]) {
+                    let usedArea = {
+                        key: settings['name'],
+                        values: used[index],
+                        type: "line", // can be: scatter, area, bar, line, stack
+                        yAxis: 1,
+                        color: colours[settings['c1']],
+                    };
+                    data.push(usedArea);
+                }
+                if (allocated[index]) {
+                    const allocatedLine = {
+                        key: settings['name'] + " Allocated",
+                        values: allocated[index],
+                        type: "line", // can be: scatter, area, bar, line, stack
+                        yAxis: 1,
+                        color: colours[settings['c2']],
+                    };
+                    data.push(allocatedLine);
+                }
+            });
 
-            .bar-chart .bar .bar-tooltip {
-                position: relative;
-                z-index: 999;
-            }
+            //build the graph
+            nv.addGraph(function () {
+                // build as multichart graph with the margin right and left to 100px.
+                let chart = nv.models.multiChart()
+                    .margin({left: 100, right: 100});
 
-            .bar-chart .bar .bar-tooltip {
-                position: absolute;
-                top: -60px;
-                left: 50%;
-                transform: translateX(-50%);
-                text-align: center;
-                font-weight: bold;
-                opacity: 0;
-            }
+                //customize the tool tip
+                chart.tooltip.contentGenerator(function (key, x, y, e, graph) {
+                    return "<div class='tooltip'><span>Month:</span> " +
+                        dayList[key.point.x] + "</div>" +
+                        "<div class='tooltip'><span>Value:</span> " +
+                        key.series[0].value +
+                        "</div><div class='tooltip'><span>Legend:</span> " +
+                        "<div style='background:" + key.series[0].color +
+                        ";display:inline-block;height:15px;width:15px;'>&#160;</div></div>";
+                });
 
-            .bar-chart .bar:hover .bar-tooltip {
-                opacity: 1;
-            }
-        </style>
-        <fieldset class="module">
-            <h2 class="caption">Ingests used capacity over time </h2>
-            <div class="results">
+                {# // charts with this option... #}
+                {# // lineChart lineWithFocusChart linePlusBarChart stackedAreaChart stackedAreaWithFocusChart#}
+                {# chart.options({focusEnable: true});#}
 
-                <div class="bar-chart">
-                    {% for x in list_over_time %}
-                        <div class="bar" style="height:{{ x.pct }}%">
-                            <div class="bar-tooltip">
-                                {{ x.used_capacity | default:0 }}<br>
-                                {{ x.extraction_date | date:"d/m/Y" }}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
+                //Overwrite the x axis label and replace it with the month name
+                chart.xAxis.tickFormat(function (d) {
+                    return dayList[d]
+                });
 
-            </div>
-        </fieldset>
+                //get the chart svg object and fecth the data to build the chart
+                d3.select('#chart svg')
+                    .datum(data)
+                    .transition()
+                    .duration(500)
+                    .call(chart);
+                return chart;
+            });
+
+        </script>
     {% endif %}
     {{ block.super }}
 {% endblock %}
 
-{% block pagination %}{% endblock %}
+{% block pagination %}
+
+{% endblock %}
