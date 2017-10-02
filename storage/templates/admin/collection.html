@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block after_field_sets %}
-    {% if ingests_over_time %}
+    {% if ingests_in_time_order %}
         <div id='chart' class='chart-wrapper'>
             <svg></svg>
         </div>
@@ -19,23 +19,10 @@
         <script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.js"></script>
         <script>
             'use strict';
-            let delimiter = '';
-            let jsonString = "[ ";
-            let line;
-            {% for x in ingests_over_time %}
-                line = delimiter;
-                line += "{\"allocated_capacity\": \"{{ x.allocated_capacity }}\", ";
-                line += "\"used_capacity\":{{ x.used_capacity }}, ";
-                line += "\"storage_product\":{{ x.storage_product }}, ";
-                line += "\"extraction_date\": \"{{ x.extraction_date | date:"Y-m-d"}}\" }";
-                jsonString += line;
-                delimiter = ', ';
-            {% endfor %}
-            jsonString += " ]";
             let dayList = [];
             let used = [];
             let allocated = [];
-            JSON.parse(jsonString).forEach((elem) => {
+            {{ ingests_in_time_order | safe }}.forEach((elem) => {
                 const day = elem['extraction_date'];
                 // we don't want duplicate dates...
                 if (dayList[dayList.length - 1] !== day) {
@@ -76,7 +63,7 @@
             storageProducts.forEach((settings, index) => {
                 if (used[index]) {
                     let usedArea = {
-                        key: settings['name'],
+                        key: settings['name'] + " Used",
                         values: used[index],
                         type: "line", // can be: scatter, area, bar, line, stack
                         yAxis: 1,
@@ -96,9 +83,7 @@
                 }
             });
 
-            //build the graph
             nv.addGraph(function () {
-                // build as multichart graph with the margin right and left to 100px.
                 let chart = nv.models.multiChart()
                     .margin({left: 100, right: 100});
 
@@ -122,7 +107,6 @@
                     return dayList[d]
                 });
 
-                //get the chart svg object and fecth the data to build the chart
                 d3.select('#chart svg')
                     .datum(data)
                     .transition()

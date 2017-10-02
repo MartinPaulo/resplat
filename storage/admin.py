@@ -1,4 +1,6 @@
 # Register your models here.
+import datetime
+import json
 import logging
 
 from django.contrib import admin
@@ -334,6 +336,11 @@ class CollectionAdmin(admin.ModelAdmin):
         num = Ingest.objects.filter(collection__id=ingest.instance.id).count()
         return '{} for this collection'.format(num)
 
+    @staticmethod
+    def make_date_handler():
+        return lambda obj: (obj.isoformat() if isinstance(obj, (
+            datetime.datetime, datetime.date)) else None)
+
     def changeform_view(self, request, object_id=None, form_url='',
                         extra_context=None):
         response = super().changeform_view(
@@ -346,13 +353,14 @@ class CollectionAdmin(admin.ModelAdmin):
                 # can have multiple entries on the same date, as each storage
                 # product used will have a separate value.
                 # no need to gather used replica...
-                # Todo: turn this into json here...
-                response.context_data['ingests_over_time'] = [{
-                    'storage_product': x['storage_product_id'],
-                    'extraction_date': x['extraction_date'],
-                    'allocated_capacity': x['allocated_capacity'] or 0,
-                    'used_capacity': x['used_capacity'] or 0,
-                } for x in qs.values()]
+                ingests = [{'storage_product': x['storage_product_id'],
+                            'extraction_date': x['extraction_date'],
+                            'allocated_capacity': int(
+                                x['allocated_capacity'] or 0),
+                            'used_capacity': int(x['used_capacity'] or 0), }
+                           for x in qs.values()]
+                response.context_data['ingests_in_time_order'] = json.dumps(
+                    ingests, default=self.make_date_handler())
         except (AttributeError, KeyError):
             logger.exception("Unexpected error on fetching ingests")
         return response
