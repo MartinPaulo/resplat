@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Weekly Ingest Status Report{% endblock %}
+
+{% load storage_extras %}
+
+{% block content %}
+
+    <h1>Ingest Status Report for {{ current_date }}</h1>
+
+    <table border=0 cellspacing=03 cellpadding=03 WIDTH="60%">
+        <tr>
+            <td>Date</td>
+            {% for product in products %}
+                <td>{{ product }}</td>
+            {% endfor %}
+        </tr>
+        {% for row in week_data %}
+            <tr>
+                <td>{{ row.date }}</td>
+                {% for pv in products.values %}
+                    <td>{% if row.stats|get_item:pv %} &#10003; {% else %}
+                                              &#10008; {% endif %}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock content %}

@@ -25,5 +25,6 @@ admin.site.index_title = 'Administration'  # ordinarily 'Site administration'
 urlpatterns = [
     url(r'^resplat/doc/', include('django.contrib.admindocs.urls')),
     url(r'^resplat/', admin.site.urls),
+    url(r'^resplat/stats/', include('storage.urls')),
     url(r'^$', views.index, name='index')
 ]
