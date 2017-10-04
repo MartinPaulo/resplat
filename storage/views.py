@@ -1,11 +1,10 @@
 import logging
 from datetime import datetime, timedelta
 
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from storage.models import Ingest, Label, StorageProduct
+from storage.models import Ingest, StorageProduct
 
 logger = logging.getLogger(__name__)
 
@@ -21,38 +20,25 @@ def _date_in_past(from_date, go_back_days):
     return from_date - timedelta(days=go_back_days)
 
 
-def _get_storage_products():
+def _get_storage_products(product_names):
     """
-    :return: the storage products in a dictionary keyed by their name (which
-             is taken from the labels table)
+    :return: the storage products in a dictionary keyed by their name
     """
-    # below is brittle: if you change the value in the database...
-    group_label = Label.objects.get(value='Storage Product',
-                                    group__value='Label')
     results = {}
-    for label in Label.objects.filter(group=group_label):
-        try:
-            results[label.value] = StorageProduct.objects.get(
-                product_name=label)
-        except (StorageProduct.DoesNotExist,
-                StorageProduct.MultipleObjectsReturned):
-            logger.exception("Unexpected error on fetching storage products")
+    sp = StorageProduct.objects.filter(product_name__value__in=product_names)
+    for product in sp:
+        results[product.product_name.value] = product
     return results
 
 
 def _ingest_counts_for_date(ingest_date, storage_products):
     ingested = {}
-    errors = []
     for name, storage_product in storage_products.items():
-        try:
-            count = Ingest.objects.filter(storage_product=storage_product,
-                                          extraction_date=ingest_date).count()
-            ingested[name] = count > 0
-        except Exception as e:
-            errors.append(e)
+        count = Ingest.objects.filter(storage_product=storage_product,
+                                      extraction_date=ingest_date).count()
+        ingested[name] = count > 0
     return {
         'ingested': ingested,
-        'errors': errors
     }
 
 
@@ -63,7 +49,7 @@ def _ingest_stats_for_week(request, end_date):
         'Market.Melbourne': 'UoMM',
         'Vault.Melbourne': 'UoMV'
     }
-    storage_products = _get_storage_products()
+    storage_products = _get_storage_products(list(products_of_interest.keys()))
     week_data = []
     for days_past in range(0, 7):
         target_day = _date_in_past(end_date, days_past)
@@ -74,8 +60,6 @@ def _ingest_stats_for_week(request, end_date):
                 'ingested'] else False
         week_data.append({'date': target_day.strftime('%d %b %Y'),
                           'stats': ingest_status})
-        for exception in counts['errors']:
-            messages.add_message(request, messages.WARNING, exception)
     return {
         'products': products_of_interest,
         'current_date': (end_date.strftime('%d %b %Y')),
