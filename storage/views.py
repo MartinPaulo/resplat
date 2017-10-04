@@ -47,7 +47,7 @@ def _ingest_stats_for_week(request, end_date):
     products_of_interest = {
         'Computational.Melbourne': 'UoMC',
         'Market.Melbourne': 'UoMM',
-        'Vault.Melbourne': 'UoMV'
+        'Vault.Melbourne.Object': 'UoMV'
     }
     storage_products = _get_storage_products(list(products_of_interest.keys()))
     week_data = []
