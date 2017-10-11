@@ -27,6 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# we are not on the standard login url...
+LOGIN_URL='/resplat/login'
+
 # Application definition
 
 INSTALLED_APPS = [
