@@ -23,7 +23,7 @@ class IngestFile(models.Model):
         help_text='the institution the file came from')
     location = models.SmallIntegerField(
         null=False, choices=SOURCE_LOCATIONS, db_column='file_location',
-        help_text='the ???')
+        help_text='the data hall')
     type = models.CharField(
         max_length=1, choices=TYPE_CHOICES, null=False, db_column='file_type',
         help_text='the storage product type covered by the file')

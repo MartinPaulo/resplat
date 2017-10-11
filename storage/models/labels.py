@@ -7,6 +7,7 @@ from django.utils.deconstruct import deconstructible
 logger = logging.getLogger(__name__)
 
 
+# Todo: we can delete and remove this class
 class LabelsAlias(models.Model):
     """
     Aliases for Labels

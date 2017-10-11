@@ -33,6 +33,8 @@ class Contact(models.Model):
     * notes
 
     """
+    # Todo: we don't need two email addresses, and two phone numbers.
+    # So we can remove the 'business' prefix and collapse them into one
     id = models.AutoField(primary_key=True, help_text='the primary key')
     first_name = models.CharField(
         'First name of contact', max_length=30,
@@ -42,7 +44,7 @@ class Contact(models.Model):
         help_text='last name of contact')
     phone_number = models.CharField(
         max_length=30, blank=True, null=True,
-        help_text='the contacts home phone number')
+        help_text='the contacts non-business phone number')
     mobile_number = models.CharField(
         max_length=30, blank=True, null=True,
         help_text='the contacts mobile number')
@@ -116,6 +118,7 @@ class Organisation(models.Model):
     short_name = models.CharField(
         max_length=20, blank=True, null=True,
         help_text='the brief name for the organisation')
+    # Todo: bring the label into this table and rename 'name' to 'full_name'
     name = models.ForeignKey(
         'storage.Label', models.DO_NOTHING,
         limit_choices_to=Q(group__value__exact='Organisation'),

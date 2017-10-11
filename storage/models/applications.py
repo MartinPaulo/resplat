@@ -40,7 +40,9 @@ class AccessLayer(models.Model):
 
 class AccessLayerMember(models.Model):
     """
-    A new table to bridge teh
+    Maps access layers to collections
+
+    A new table
 
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
@@ -87,10 +89,10 @@ class Allocation(models.Model):
         limit_choices_to=Q(group__value__exact='IDM Domain'),
         default=GroupDefaultLabel('IDM Domain'),
         related_name='allocation_idm_domain',
-        help_text='???')
+        help_text='the identity management domain (idm)')
     idm_identifier = models.CharField(
         max_length=50, blank=True, null=True,
-        help_text='???')
+        help_text='the identifier within the idm domain')
     application = models.ForeignKey(
         'storage.Request', models.DO_NOTHING,
         blank=True, null=True, related_name='allocations',
@@ -167,14 +169,18 @@ class CollectionProfile(models.Model):
     * user_access_frequency
     * user_interaction blank
 
+
     """
+    # Todo: restore the impact_of_loss, migration_assistance_required and
+    # the anticipated_growth fields
     id = models.AutoField(primary_key=True, help_text='the primary key')
     collection = models.OneToOneField(
         'storage.Collection',
         help_text='the collection associated with this profile')
+    #  Todo: rename merit_justification to 'description'
     merit_justification = models.TextField(
         blank=True, null=True,
-        help_text='the justification underlying the collection')
+        help_text='description of what the collection is')
     estimated_final_size = models.DecimalField(
         max_digits=15, decimal_places=2, blank=True, null=True,
         verbose_name='estimated collection final size',
@@ -325,7 +331,7 @@ class Ingest(models.Model):
         help_text='the storage product holding the data')
     used_replica = models.DecimalField(
         max_digits=15, decimal_places=2, blank=True, null=True, default=0,
-        verbose_name='replica ingested capacity in GB',
+        verbose_name='the replica storage used (if any) in GB',
         help_text='??')
 
     @property
@@ -371,9 +377,10 @@ class Collection(models.Model):
 
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
+    # Todo: rename overview to 'notes'
     overview = models.TextField(
         blank=True, null=True,
-        help_text='a summary of the collection')
+        help_text='summary notes on the collection')
     name = models.TextField(
         verbose_name='Collection Name',
         help_text='the collection name')
@@ -382,7 +389,7 @@ class Collection(models.Model):
         limit_choices_to=Q(group__value__exact='Collective'),
         default=GroupDefaultLabel('Collective'),
         related_name='collection_collective',
-        help_text='???')
+        help_text='legacy funding and is based on research domains')
     status = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Collection Status'),
@@ -421,6 +428,7 @@ class Request(models.Model):
 
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
+    # Todo: rename code to vicnode_id
     code = models.CharField(max_length=15, verbose_name='application code',
                             help_text='the application code')  # wtf is this?
     application_form = models.URLField(
@@ -433,12 +441,13 @@ class Request(models.Model):
         limit_choices_to=Q(group__value__exact='Funding Code'),
         default=GroupDefaultLabel('Funding Code'),
         related_name='application_cap_funding_source',
-        help_text='where the funding for the collection is being sourced from')
+        help_text='the funding scheme for the collection')
     institution = models.ForeignKey(
         'storage.Organisation', models.DO_NOTHING, blank=True, null=True,
         verbose_name='sponsoring institution',
         related_name='application_institution',
         help_text='the institution from which the request comes')
+    # Todo: drop node
     node = models.ForeignKey(
         'storage.Label', models.DO_NOTHING,
         limit_choices_to=Q(group__value__exact='Node'),
@@ -446,6 +455,7 @@ class Request(models.Model):
         blank=True, null=True,
         verbose_name='target node', related_name='Application_Node',
         help_text='VicNode or not?')
+    # Todo: drop scheme
     scheme = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Allocation Scheme'),
@@ -489,6 +499,7 @@ class StorageProduct(models.Model):
     unit_cost = models.DecimalField(
         max_digits=15, decimal_places=2, default=0,
         help_text='the cost per unit of storage')
+    # Todo: drop operational_cost
     operational_cost = models.DecimalField(
         max_digits=15, decimal_places=2, default=0,
         help_text='the operation cost')
@@ -504,6 +515,7 @@ class StorageProduct(models.Model):
         default=GroupDefaultLabel('Storage Product'),
         related_name='storageproduct_name',
         help_text='the name of this storage product')
+    # Todo: drop scheme
     scheme = models.ForeignKey(
         'storage.Label', models.DO_NOTHING,
         limit_choices_to=Q(group__value__exact='Allocation Scheme'),
