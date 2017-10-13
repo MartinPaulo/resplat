@@ -59,7 +59,7 @@ class LabelManager(models.Manager):
             group_label = self.get(value__exact=group_value, group=1)
             return self.filter(group=group_label)
         except (Label.DoesNotExist, Label.MultipleObjectsReturned) as e:
-            logger.warning("Group choice with value %s has problem",
+            logger.warning("Group choice with value %s has a problem",
                            group_value, exc_info=1)
             return None
 
@@ -96,8 +96,8 @@ class LabelManager(models.Manager):
         try:
             return self.get(value__exact=group_value, group=1).id
         except (Label.DoesNotExist, Label.MultipleObjectsReturned) as e:
-            logger.warning("Group code with value %s has problem", group_value,
-                           exc_info=1)
+            logger.warning("Group code with value %s has a problem",
+                           group_value, exc_info=1)
             return None
 
 
