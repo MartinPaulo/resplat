@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from storage.models import Ingest, StorageProduct
+from storage.models import Ingest, StorageProduct, Collection, Label
 
 logger = logging.getLogger(__name__)
 
@@ -65,3 +65,30 @@ def _ingest_stats_for_week(request, end_date):
         'current_date': (end_date.strftime('%d %b %Y')),
         'week_data': week_data
     }
+
+
+def _fetch_collection_status_data():
+    result = []
+    last_status = None
+    current_status_collection_list = []
+    for collection in Collection.objects.all().order_by('status'):
+        if last_status != collection.status:
+            if not last_status and len(current_status_collection_list):
+                # we have a list of collections with no status set on them
+                result.append(
+                    {'status': None,
+                     'collection_list': current_status_collection_list})
+            last_status = collection.status
+            current_status_collection_list = []
+            result.append(
+                {'status': collection.status,
+                 'collection_list': current_status_collection_list})
+        current_status_collection_list.append(collection)
+    return result
+
+
+@login_required
+def collection_status(request):
+    report_list = _fetch_collection_status_data()
+    context = {'report_list': report_list}
+    return render(request, 'collection_status.html', context)

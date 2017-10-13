@@ -1,6 +1,5 @@
 import datetime
 
-from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q
 
@@ -407,6 +406,14 @@ class Collection(models.Model):
 
     class Meta:
         db_table = 'applications_project'
+
+    @property
+    def application_code(self):
+        """
+        :return: the first application code to be shown as the collection code
+        """
+        allocation = self.allocations.first()
+        return allocation.application.code if allocation else ' '
 
 
 class Request(models.Model):

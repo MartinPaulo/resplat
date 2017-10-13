@@ -1,0 +1,24 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Collection Status Report{% endblock %}
+
+{% block content %}
+    <h1>Collection Status Report</h1>
+    <p></p>
+    {% for report_dict in report_list %}
+        <h3>{{ report_dict.status.value|default:'Status not yet set' }}</h3>
+        <table border=0 cellspacing=03 cellpadding=03 width="70%">
+            <tr class='row_thick'>
+                <td width="10%">Vicnode Id</td>
+                <td width="40%">Collection Name</td>
+            </tr>
+            {% for collection in report_dict.collection_list %}
+                <tr>
+                    <td>{{ collection.application_code }}</td>
+                    <td>
+                        <a href="{% url 'admin:storage_collection_change' collection.id %}">{{ collection.name }}</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endfor %}
+{% endblock content %}
