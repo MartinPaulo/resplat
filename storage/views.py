@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from storage.models import Ingest, StorageProduct, Collection, Label
+from storage.models import Ingest, StorageProduct, Collection
 
 logger = logging.getLogger(__name__)
 
