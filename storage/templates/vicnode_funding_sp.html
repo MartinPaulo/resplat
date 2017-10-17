@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+
+{% load storage_extras %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'storage/app.css' %}"/>
+{% endblock %}
+
+{% block title %}Vicnode Funding Report{% endblock %}
+
+{% block content %}
+
+    <h1>Vicnode Funding by {{ funding.type }}</h1>
+
+    <table border=0 cellspacing=03 cellpadding=03 width="60%">
+        <tr class='row_thick'>
+            <td width="30">Storage Product</td>
+            <td width="25%">Allocation Scheme</td>
+            <td width="15%" class="col_right">Awaiting Approval
+                                              ({{ funding.metric.text }})
+            </td>
+            <td width="15%" class="col_right">Approved
+                                              ({{ funding.metric.text }})
+            </td>
+            <td width="15%" class="col_right">Ingested
+                                              ({{ funding.metric.text }})
+            </td>
+        </tr>
+
+        {% for row in funding.report %}
+            {% if row.isUnfunded and row.data.ingested == 0 %}
+            {% else %}
+                <tr {% if row.is_unfunded %}
+                    class='row_unfunded' {% elif row.is_total %}
+                    class='row_total' {% endif %}>
+                    <td>{{ row.storage_product }}</td>
+                    <td>{{ row.scheme }}</td>
+                    <td class="col_right">{{ row.data.awaiting|multiply:funding.metric.factor|floatformat }}</td>
+                    <td class="col_right">{{ row.data.approved|multiply:funding.metric.factor|floatformat }}</td>
+                    <td class="col_right">{{ row.data.ingested|multiply:funding.metric.factor|floatformat }}</td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+{% endblock content %}

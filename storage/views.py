@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from storage.csv_streamer import csv_stream
+from storage.funding_report import FundingReportForAllCollectionsBySP
 from storage.models import Ingest, StorageProduct, Collection
 from storage.report_reds import reds_123_calc
 
@@ -107,3 +108,14 @@ def reds_report_uom(request):
 def reds_report(request):
     all_storage_products = StorageProduct.objects.all()
     return csv_stream(reds_123_calc(all_storage_products), 'reds123_all.csv')
+
+
+@login_required
+def vicnode_funding_by_storage_product(request):
+    fundingReport = FundingReportForAllCollectionsBySP()
+    context = {'funding': {'report': fundingReport.report,
+                           'type': fundingReport.reportType,
+                           'metric': {'text': fundingReport.METRIC_TB,
+                                      'factor': fundingReport.get_conversion_factor(fundingReport.METRIC_TB)}
+                           }}
+    return render(request, 'vicnode_funding_sp.html', context)
