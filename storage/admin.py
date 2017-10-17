@@ -306,7 +306,7 @@ class CollectionAdmin(admin.ModelAdmin):
     3  Computational.Monash.Performance
     4  Market.Melbourne
     6  Market.Monash
-    10 Vault.Melbourne
+    10 Vault.Melbourne.Object
     11 Vault.Monash
     14 Market.Monash.Object
     22 Market.Monash.File

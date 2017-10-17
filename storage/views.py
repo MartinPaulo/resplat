@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+from storage.csv_streamer import csv_stream
 from storage.models import Ingest, StorageProduct, Collection
+from storage.report_reds import reds_123_calc
 
 logger = logging.getLogger(__name__)
 
@@ -92,3 +94,16 @@ def collection_status(request):
     report_list = _fetch_collection_status_data()
     context = {'report_list': report_list}
     return render(request, 'collection_status.html', context)
+
+
+@login_required
+def reds_report_uom(request):
+    uom_storage_products = StorageProduct.objects.filter(
+        product_name__value__icontains='Melbourne')
+    return csv_stream(reds_123_calc(uom_storage_products), 'reds123_uom.csv')
+
+
+@login_required
+def reds_report(request):
+    all_storage_products = StorageProduct.objects.all()
+    return csv_stream(reds_123_calc(all_storage_products), 'reds123_all.csv')

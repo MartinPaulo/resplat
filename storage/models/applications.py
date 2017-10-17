@@ -1,7 +1,7 @@
 import datetime
 
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Sum
 
 from storage.models.labels import GroupDefaultLabel
 
@@ -240,10 +240,6 @@ class Domain(models.Model):
 
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
-    split = models.DecimalField(
-        max_digits=5, decimal_places=4, blank=True, null=True, default=0,
-        verbose_name='percentage split in decimal',
-        help_text='percentage split of the total field of research allocation')
     collection = models.ForeignKey(
         'storage.Collection', related_name='domains',
         help_text='the associated collection')
@@ -252,6 +248,10 @@ class Domain(models.Model):
         verbose_name='Field of Research', related_name='domains',
         db_column='fieldofresearch_id',
         help_text='the field of research')
+    split = models.DecimalField(
+        max_digits=5, decimal_places=4, blank=True, null=True, default=0,
+        verbose_name='percentage split in decimal',
+        help_text='percentage split of the total field of research allocation')
 
     def __str__(self):
         return " ".join(filter(None, [self.collection.name,
@@ -415,6 +415,42 @@ class Collection(models.Model):
         allocation = self.allocations.first()
         return allocation.application.code if allocation else ' '
 
+    def has_allocation_for_storage_products(self, storage_products):
+        """
+        :param storage_products: The suite of storage products to be tested
+        :return: True if any of the storage products have an allocation,
+                 otherwise False
+        """
+        return self.allocations.filter(
+            storage_product__in=storage_products).count() > 0
+
+    @property
+    def for_count(self):
+        """ :return: the number of FOR codes this collection covers"""
+        return self.domains.count()
+
+    @property
+    def for_split(self):
+        """ :return: the split percentage depending on number of FOR codes """
+        if self.for_count == 0:
+            return 1.0
+        return round(1.0 / self.for_count, 4)
+
+    @property
+    def total_allocation(self):
+        """ :return: the total allocation for the collection in Terabytes """
+        result = self.allocations.exclude(size=None).aggregate(
+            tot_alloc=Sum('size'))
+        amount = result['tot_alloc']
+        if amount:
+            return amount / 1000
+        return 0
+
+    @property
+    def for_amount(self):
+        """ :return: the amount of the total allocation for each FOR code """
+        return round(float(self.total_allocation) * float(self.for_split), 2)
+
 
 class Request(models.Model):
     """
@@ -489,6 +525,22 @@ class Request(models.Model):
         db_table = 'applications_request'
 
 
+class StorageProductManager(models.Manager):
+    def get_product_names(self):
+        """
+        :return: A queryset containing the storage product names as strings
+        """
+        return self.values_list('product_name__value', flat=True)
+
+    def get_uom_product_names(self):
+        """
+        :return: A queryset containing the uom storage product names as strings
+        """
+        return self.filter(
+            product_name__value__icontains='Melbourne').values_list(
+            'product_name__value', flat=True)
+
+
 class StorageProduct(models.Model):
     """
     The storage products that are/have been in use.
@@ -535,6 +587,8 @@ class StorageProduct(models.Model):
         default=GroupDefaultLabel('Operational Center'),
         related_name='storage_product_op_center',
         help_text='this products operational center')
+
+    objects = StorageProductManager()
 
     def __str__(self):
         return self.product_name.value
