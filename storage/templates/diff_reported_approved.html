@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'storage/app.css' %}"/>
+{% endblock %}
+
+{% block title %}
+    Difference Between Reported Allocation and Approved Allocation
+{% endblock %}
+{% block content %}
+
+    <h1>Difference Between Reported Allocation and Approved Allocation
+        - {{ source }}</h1>
+    <br/>
+    <h3>A total of {{ diff_list|length }} found</h3>
+    <table border=0 cellspacing=03 cellpadding=03 WIDTH="80%">
+        <tr class='row_thick'>
+            <td>Code</td>
+            <td>Status</td>
+            <td>Collection Name</td>
+            <td>Storage Product</td>
+            <td>Extraction Date</td>
+            <td>Total Approved Size (GB)</td>
+            <td>Reported Size (GB)</td>
+            <td>Difference (GB)</td>
+        </tr>
+        {% for  diff_repo in diff_list %}
+            <tr>
+                <td>
+                    {% if diff_repo.ingest.collection.allocations.first.application.code %}
+                        <a href="{% url 'admin:storage_allocation_change' diff_repo.ingest.collection.allocations.first.id %}">
+                            {{ diff_repo.ingest.collection.allocations.first.application.code }}
+                        </a>
+                    {% else %}
+                        &nbsp;
+                    {% endif %}
+                </td>
+                <td>{{ diff_repo.ingest.collection.status }}</td>
+                <td>
+                    <a href="{% url 'admin:storage_collection_change' diff_repo.ingest.collection.id %}">{{ diff_repo.ingest.collection.name }}</a>
+                </td>
+                <td>{{ diff_repo.ingest.storage_product.product_name }}</td>
+                <td>{{ diff_repo.ingest.extraction_date }}</td>
+                <td class="col_right">{{ diff_repo.approved_size|floatformat:2 }}</td>
+                <td class="col_right">{{ diff_repo.ingest.allocated_capacity|floatformat:2 }}</td>
+                <td class="col_right">{{ diff_repo.diff_size|floatformat:2 }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock content %}
