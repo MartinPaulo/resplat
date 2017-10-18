@@ -1,11 +1,12 @@
 import sys
 from abc import abstractmethod, ABC
 from decimal import Decimal
+from typing import Optional
 
 from storage.models import Collection, Label
 
 
-def _get_label_sequence_tuple(label):
+def _get_label_sequence_tuple(label) -> (Optional[int], str):
     """
     :param label: the label to be converted into a tuple
     :return: a tuple made of the labels sequence number and the label value
@@ -176,7 +177,7 @@ class FundingReportForCollection(AbstractFundingReportBase):
                 self.global_data_dict[sp] = sp_obj
 
             try:
-                tuple_obj = sp_obj[scheme_key_tuple]
+                tuple_obj = sp_obj[scheme_key_tuple[0]]
             except KeyError:
                 tuple_obj = FundingReportRowTuple()
                 sp_obj[scheme_key_tuple] = tuple_obj
@@ -203,7 +204,7 @@ class FundingReportForCollection(AbstractFundingReportBase):
                     if sp_unfunded.ingested > 0:
                         sp_scheme_obj.ingested = min(sp_unfunded.ingested,
                                                      sp_scheme_obj.approved)
-                        sp_unfunded.ingested = sp_unfunded.ingested - sp_scheme_obj.ingested
+                        sp_unfunded.ingested -= sp_scheme_obj.ingested
                     sp_total.add(sp_scheme_obj)
                 except KeyError:
                     pass
