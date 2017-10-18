@@ -6,7 +6,7 @@ from django.shortcuts import render
 
 from storage.csv_streamer import csv_stream
 from storage.diff_reported_and_approved import \
-    fetch_diff_reported_and_approved_allocation
+    get_difference_between_approved_and_reported
 from storage.funding_report import FundingReportForAllCollectionsBySP
 from storage.models import Ingest, StorageProduct, Collection
 from storage.report_reds import reds_123_calc
@@ -125,13 +125,9 @@ def vicnode_funding_by_storage_product(request):
 
 
 @login_required
-def query_diff_reported_and_approved_for_all(request):
-    context = {'diff_list': fetch_diff_reported_and_approved_allocation('All'),
-               'source': 'All'}
-    return render(request, 'diff_reported_approved.html', context)
-
-
-@login_required
-def query_diff_reported_and_approved_for_uom(request):
-    context = {'diff_list': fetch_diff_reported_and_approved_allocation('Melbourne'), 'source': 'University of Melbourne'}
+def difference_between_reported_and_approved(request, target='All'):
+    source = 'University of Melbourne' if target.lower() == 'melbourne' else target
+    context = {
+        'diff_list': get_difference_between_approved_and_reported(target),
+        'source': source}
     return render(request, 'diff_reported_approved.html', context)
