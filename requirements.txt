@@ -2,3 +2,4 @@
 django
 psycopg2    # http://initd.org/psycopg/docs/install.html ?
 docutils    # for admin docs
+matplotlib

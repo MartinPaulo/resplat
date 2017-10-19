@@ -10,6 +10,7 @@ from storage.diff_reported_and_approved import \
 from storage.funding_report import FundingReportForAllCollectionsBySP
 from storage.models import Ingest, StorageProduct, Collection
 from storage.report_reds import reds_123_calc
+from storage.total_ingest_over_time_report import get_total_ingests_over_time
 
 logger = logging.getLogger(__name__)
 
@@ -131,3 +132,9 @@ def difference_between_reported_and_approved(request, target='All'):
         'diff_list': get_difference_between_approved_and_reported(target),
         'source': source}
     return render(request, 'diff_reported_approved.html', context)
+
+
+@login_required
+def total_ingests_over_time(request):
+    context = get_total_ingests_over_time()
+    return render(request, 'total_ingest_over_time.html', context)

@@ -8,7 +8,7 @@
 }
 
 .row_unfunded {
-    background-color:lightcoral;
+    background-color: lightcoral;
 }
 
 .col_right {
@@ -18,3 +18,14 @@
 /*tr:nth-child(odd)		{ background-color:lightgrey; }
 tr:nth-child(even)		{ background-color:#ffffff; }
 */
+.ingest_sp_time_section {
+}
+
+.ingest_sp_time_left {
+    width: 350px;
+    float: left;
+}
+
+.ingest_sp_time_right {
+    margin-left: 355px;
+}
