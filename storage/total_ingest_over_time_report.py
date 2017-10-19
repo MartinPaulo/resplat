@@ -122,6 +122,9 @@ def _daily_ingests_grouped_by_storage_product():
         results.append(store_product_ingest)
     return results
 
+# All the stuff below is to draw the graph...
+# Todo: remove the matplotlib from requirements.txt when this is removed...
+
 
 dark_orange = [1, 140 / 255, 0]
 dark_golden_rod = [184 / 255, 134 / 255, 11 / 255]
