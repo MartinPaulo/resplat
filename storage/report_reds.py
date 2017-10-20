@@ -204,6 +204,8 @@ def reds_123_calc(for_storage_products):
         try:
             first_application = Request.objects.get(
                 code=collection.application_code)
+            if not first_application or not first_application.status:
+                continue
             status = first_application.status.value
             if first_application.scheme.value not in VALID_SCHEMES.values():
                 continue
