@@ -153,6 +153,7 @@ resources:
                   apt-get -y install python3-pip apache2 libapache2-mod-wsgi-py3
                   apt-get -y install git
                   apt-get -y install python3-dev
+                  apt-get -y install python3-tk
                   apt-get -y install libpq-dev postgresql postgresql-contrib
                   pip3 install --upgrade pip
 
