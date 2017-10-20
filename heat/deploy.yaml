@@ -1,0 +1,238 @@
+# Juno Release
+heat_template_version: 2014-10-16
+
+
+description: 'Install ResPlat storage app on a single Ubuntu  16.06 instance. '
+
+
+parameters:
+
+  key_name:
+    type: string
+    label: Key Name
+    description: Name of an existing KeyPair to enable SSH access to the instances.
+    constraints:
+      - custom_constraint: nova.keypair
+        description: Must be an existing KeyPair
+
+  image_id:
+    type: string
+    label: Image name
+    description: Image to be used for compute instance
+    constraints:
+      - custom_constraint: glance.image
+        description: Must be a valid Ubuntu 16.04 image
+
+  instance_type:
+    type: string
+    label: Instance Type
+    description: Type of instance (flavor) to be used.
+    constraints:
+      - custom_constraint: nova.flavor
+        description: Must be a valid NeCTAR flavour
+
+  availability_zone:
+    type: string
+    label: Availability Zone
+    description: Physical location of the server.
+    default: melbourne
+    constraints:
+      - allowed_values: [ monash, melbourne, QRIScloud, NCI, intersect, pawsey, sa, tasmania ]
+        description: Value must be one of monash, melbourne, QRIScloud, NCI, intersect, pawsey, sa, tasmania.
+
+  su_name:
+    type: string
+    label: Superuser Username
+    description: The username of an administrator
+
+  su_email:
+    type: string
+    label: Superuser Email
+    description: The email address of the administrator
+
+  su_pass:
+    type: string
+    label: Superuser Password
+    description: The password administrator
+
+  db_name:
+    type: string
+    label: The Database Name
+
+  db_user:
+    type: string
+    label: Database Username
+
+  db_password:
+    type: string
+    label: The Database User Password
+
+  db_host:
+    type: string
+    label: The Database Host
+    default: localhost
+
+  db_key:
+    type: string
+    label: The Database Key
+
+resources:
+
+    # Use this when we do not have Neutron networking.
+    # http://docs.openstack.org/developer/heat/template_guide/cfn.html#AWS::EC2::SecurityGroup
+    web_security_group:
+        type: AWS::EC2::SecurityGroup
+        properties:
+            GroupDescription: Web server access rules.
+            SecurityGroupIngress:
+                - {IpProtocol: tcp, FromPort: '22', ToPort: '22', CidrIp: 0.0.0.0/0}
+                - {IpProtocol: tcp, FromPort: '80', ToPort: '80', CidrIp: 0.0.0.0/0}
+
+    wait_condition:
+      type: OS::Heat::WaitCondition
+      properties:
+        handle: { get_resource: wait_handle }
+        count: 1
+        timeout: 600
+
+    wait_handle:
+      type: OS::Heat::WaitConditionHandle
+
+    secret_key:
+      type: OS::Heat::RandomString
+      properties:
+        length: 50
+
+    app_server:
+        type: OS::Nova::Server
+        properties:
+            key_name: { get_param: key_name }
+            image: { get_param: image_id }
+            flavor: { get_param: instance_type }
+            availability_zone: {get_param: availability_zone}
+            security_groups:
+                - { get_resource: web_security_group }
+            user_data_format: RAW
+            user_data:
+              str_replace:
+                params:
+                  wc_notify: {get_attr: ['wait_handle', 'curl_cli'] }
+                  NEW_KEY: {get_attr: ['secret_key', 'value']}
+                  SU_NAME: {get_param: 'su_name'}
+                  SU_EMAIL: {get_param: 'su_email'}
+                  SU_PASSWORD: {get_param: 'su_pass'}
+                  DB_NAME: {get_param: 'db_name'}
+                  DB_USER: {get_param: 'db_user'}
+                  DB_PASSWORD: {get_param: 'db_password'}
+                  DB_HOST: {get_param: 'db_host'}
+                  DB_KEY: {get_param: 'db_key'}
+                template: |
+                  #!/bin/bash
+                  echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                  echo "Beginning run of user_data script."
+
+                  # useful links:
+                  #   http://stackoverflow.com/questions/20913125/mod-wsgi-for-correct-version-of-python3
+                  #   https://www.digitalocean.com/community/tutorials/how-to-serve-django-applications-with-apache-and-mod_wsgi-on-ubuntu-16-04
+                  #   https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04
+
+                  # Following will stop things like grub asking if the user
+                  # wants to keep the old config file or not, which stops
+                  # the automated install dead.
+                  export DEBIAN_FRONTEND=noninteractive
+                  apt-get update
+
+                  # It appears that some ubuntu 16.04 images automatically run
+                  # unattended-upgrades on boot: so our script sometimes
+                  # clashes with it. Hence we wait if we find it running...
+                  while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+                    sleep 1
+                  done
+
+                  apt-get -y upgrade
+                  apt-get -y install python3-pip apache2 libapache2-mod-wsgi-py3
+                  apt-get -y install git
+                  apt-get -y install python3-dev
+                  apt-get -y install libpq-dev postgresql postgresql-contrib
+                  pip3 install --upgrade pip
+
+                  git clone https://github.com/MartinPaulo/resplat.git
+                  cd /resplat/
+                  pip3 install -r requirements.txt
+
+                  # build the database
+                  # curl -o dump.sql https://swift.rc.nectar.org.au:8888/v1/AUTH_612a4df9bfab47c38324ead4e5f8dd79/trial/dump.sql
+                  curl -o data.sql.tgz.gpg https://swift.rc.nectar.org.au:8888/v1/AUTH_612a4df9bfab47c38324ead4e5f8dd79/trial/dump.sql.tgz.gpg
+                  echo "DB_KEY" | gpg --no-tty --decrypt --passphrase-fd 0 data.sql.tgz.gpg > data.sql.tgz
+                  tar -zxvf data.sql.tgz
+                  sudo -u postgres createdb -T template0 DB_NAME
+
+                  sudo -u postgres psql -c "CREATE USER DB_USER WITH PASSWORD 'DB_PASSWORD';"
+                  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE DB_NAME to DB_USER;"
+                  sudo -u postgres psql -c "GRANT create ON DATABASE DB_NAME to DB_USER;"
+
+                  sudo -u postgres psql -c "CREATE USER vicnode WITH PASSWORD 'DB_PASSWORD';"
+                  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE DB_NAME to vicnode;"
+                  sudo -u postgres psql -c "GRANT create ON DATABASE DB_NAME to vicnode;"
+
+                  sudo -u postgres psql -c "CREATE USER vicnode_prd_ro WITH PASSWORD 'DB_PASSWORD';"
+                  sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE DB_NAME to vicnode_prd_ro;"
+                  sudo -u postgres psql -c "GRANT create ON DATABASE DB_NAME to vicnode_prd_ro;"
+
+                  sudo -u postgres psql DB_NAME < my_vicnode_dump.sql > load_log.txt
+                  sudo -u postgres psql -d DB_NAME -a -f heat/db_transform.sql > transform_log.txt
+
+                  cp resplat/local_settings_template.py resplat/local_settings.py
+                  # Ok: Don't run in debug mode...
+                  sed -i -e 's/DEBUG = True/DEBUG = False/g' resplat/settings.py
+                  # Let Django know about the host
+                  sed -i -e "s/ALLOWED_HOSTS = \[]/ALLOWED_HOSTS = \['\*']/g" resplat/settings.py
+                  sed -i -e "s/SECRET_KEY.*/SECRET_KEY='NEW_KEY'/g" resplat/settings.py
+
+                  sed -i -e "s/'NAME'.*/'NAME': 'DB_NAME',/g" resplat/local_settings.py
+                  sed -i -e "s/'USER'.*/'USER': 'DB_USER',/g" resplat/local_settings.py
+                  sed -i -e "s/'PASSWORD'.*/'PASSWORD': 'DB_PASSWORD',/g" resplat/local_settings.py
+                  sed -i -e "s/'HOST'.*/'HOST': 'DB_HOST',/g" resplat/local_settings.py
+
+                  python3 manage.py migrate --fake-initial
+                  # python3 manage.py createsuperuser --noinput --username SU_NAME --email SU_EMAIL
+                  echo "from django.contrib.auth.models import User; User.objects.create_superuser('SU_NAME', 'SU_EMAIL', 'SU_PASSWORD')" | python3 manage.py shell
+                  python3 manage.py collectstatic --no-input
+
+                  # set up apache to serve the django app
+                  sed -i.bak '/serve-cgi-bin.conf/a \
+                      Alias /static /var/www/static \
+                      <Directory /var/www/static> \
+                           Require all granted \
+                      </Directory> \
+                      <Directory /resplat/resplat> \
+                           <Files wsgi.py> \
+                              Require all granted \
+                           </Files> \
+                      </Directory> \
+                      WSGIDaemonProcess resplat python-home=/usr/bin/python3 python-path=/resplat \
+                      WSGIProcessGroup resplat \
+                      WSGIScriptAlias / /resplat/resplat/wsgi.py' /etc/apache2/sites-available/000-default.conf
+                  # echo "127.0.0.1  `hostname`" >> /etc/hosts
+                  systemctl restart apache2
+
+                  # notify heat that we are done here
+                  wc_notify --data-binary '{"status": "SUCCESS"}'
+                  echo ""
+                  echo "End: run user_data bash script."
+                  echo "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+
+outputs:
+
+    instance_ip:
+        description: The IP address of the deployed instance
+        value: { get_attr: [app_server, first_address] }
+
+    website_url:
+        description: URL for the application
+        value:
+            list_join: ['', ['http://', get_attr: [app_server, first_address]]]
+
+
+
+
