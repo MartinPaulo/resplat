@@ -6,6 +6,7 @@ from django.shortcuts import render
 
 from storage.csv_streamer import csv_stream
 from storage.models import Ingest, StorageProduct, Collection
+from storage.report_demographics import demographics_report
 from storage.report_diff_reported_and_approved import \
     get_difference_between_approved_and_reported
 from storage.report_funding import FundingReportForAllCollectionsBySP
@@ -128,3 +129,13 @@ def difference_between_reported_and_approved(request, target='All'):
 def total_ingests_over_time(request):
     context = get_total_ingests_over_time()
     return render(request, 'total_ingest_over_time.html', context)
+
+
+@login_required
+def demographics_stream(request):
+    """
+    Export Demographics data
+    :param request: http request
+    :return: A CSV file with name 'demographics.csv'
+    """
+    return csv_stream(demographics_report(), 'demographics.csv')

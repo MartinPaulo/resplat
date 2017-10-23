@@ -1,19 +1,6 @@
-from storage.csv_streamer import csv_stream
 from storage.models import Custodian, Collection
 
 __author__ = 'mmohamed'
-
-from django.contrib.auth.decorators import login_required
-
-
-@login_required
-def demographics_stream(request):
-    """
-    Export Demographics data
-    :param request: http request
-    :return: A CSV file with name 'demographics.csv'
-    """
-    return csv_stream(_demographics_report(), 'demographics.csv')
 
 
 def _convert_to_report(report_obj_list):
@@ -102,7 +89,7 @@ class DemographicsRow:
                         self.ingest_phase = self.MIXED
 
 
-def _demographics_report():
+def demographics_report():
     report_obj_list = []
     current_person = None
     for custodian in Custodian.objects.all().order_by('person'):
