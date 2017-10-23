@@ -5,12 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from storage.csv_streamer import csv_stream
-from storage.diff_reported_and_approved import \
+from storage.report_diff_reported_and_approved import \
     get_difference_between_approved_and_reported
-from storage.funding_report import FundingReportForAllCollectionsBySP
+from storage.report_funding import FundingReportForAllCollectionsBySP
 from storage.models import Ingest, StorageProduct, Collection
 from storage.report_reds import reds_123_calc
-from storage.total_ingest_over_time_report import get_total_ingests_over_time
+from storage.report_total_ingest_over_time import get_total_ingests_over_time
 
 logger = logging.getLogger(__name__)
 
