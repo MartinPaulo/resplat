@@ -5,10 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from storage.csv_streamer import csv_stream
+from storage.models import Ingest, StorageProduct, Collection
 from storage.report_diff_reported_and_approved import \
     get_difference_between_approved_and_reported
 from storage.report_funding import FundingReportForAllCollectionsBySP
-from storage.models import Ingest, StorageProduct, Collection
 from storage.report_reds import reds_123_calc
 from storage.report_total_ingest_over_time import get_total_ingests_over_time
 
@@ -24,17 +24,6 @@ def ingests_for_week(request, days='0'):
 
 def _date_in_past(from_date, go_back_days):
     return from_date - timedelta(days=go_back_days)
-
-
-def _get_storage_products(product_names):
-    """
-    :return: the storage products in a dictionary keyed by their name
-    """
-    results = {}
-    sp = StorageProduct.objects.filter(product_name__value__in=product_names)
-    for product in sp:
-        results[product.product_name.value] = product
-    return results
 
 
 def _ingest_counts_for_date(ingest_date, storage_products):
@@ -55,7 +44,8 @@ def _ingest_stats_for_week(request, end_date):
         'Market.Melbourne': 'UoMM',
         'Vault.Melbourne.Object': 'UoMV'
     }
-    storage_products = _get_storage_products(list(products_of_interest.keys()))
+    storage_products = StorageProduct.objects.get_by_name(
+        list(products_of_interest.keys()))
     week_data = []
     for days_past in range(0, 7):
         target_day = _date_in_past(end_date, days_past)

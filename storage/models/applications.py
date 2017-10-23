@@ -558,6 +558,16 @@ class StorageProductManager(models.Manager):
             product_name__value__icontains='Melbourne').values_list(
             'product_name__value', flat=True)
 
+    def get_by_name(self, product_names):
+        """
+        :param product_names: a list of names of the storage products desired
+        :return: the storage products in a dictionary keyed by their name
+        """
+        results = {}
+        for product in self.filter(product_name__value__in=product_names):
+            results[product.product_name.value] = product
+        return results
+
 
 class StorageProduct(models.Model):
     """
