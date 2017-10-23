@@ -1,5 +1,6 @@
 from django.conf.urls import url
 
+from storage.demographics_for_delighted_report import demographics_stream
 from storage.views import ingests_for_week, collection_status, reds_report, \
     reds_report_uom, vicnode_funding_by_storage_product, \
     difference_between_reported_and_approved, total_ingests_over_time
@@ -16,4 +17,6 @@ urlpatterns = [
     url(r'^diff_reported_and_approved/(?P<target>[^/]+)$',
         difference_between_reported_and_approved),
     url(r'^total_ingest_over_time/$', total_ingests_over_time),
+    url(r'^demographics/$', demographics_stream),
+
 ]

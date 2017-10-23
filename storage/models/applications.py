@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 
 from django.db import models
 from django.db.models import Q, Sum
@@ -450,6 +451,23 @@ class Collection(models.Model):
     def for_amount(self):
         """ :return: the amount of the total allocation for each FOR code """
         return round(float(self.total_allocation) * float(self.for_split), 2)
+
+    def get_allocations_by_storage_product(self):
+        """
+        Return a dictionary with StorageProducts as keys
+        For each Storage Product associated with the Collection, the value is
+        a tuple
+            ([list of allocations specific to Storage Product],
+            total_allocation_size for Storage Product)
+        """
+        result = {}
+        for allocation in self.allocations.all():
+            (alloc_list, size) = result.get(allocation.storage_product,
+                                            ([], Decimal(0.0)))
+            alloc_list.append(allocation)
+            result[allocation.storage_product] = (
+                alloc_list, size + allocation.size)
+        return result
 
 
 class Request(models.Model):
