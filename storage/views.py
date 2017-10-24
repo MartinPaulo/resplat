@@ -9,9 +9,11 @@ from storage.models import Ingest, StorageProduct, Collection
 from storage.report_demographics import demographics_report
 from storage.report_diff_reported_and_approved import \
     get_difference_between_approved_and_reported
+from storage.report_for_code_ingest import report_for_code_ingest
 from storage.report_funding import FundingReportForAllCollectionsBySP
 from storage.report_reds import reds_123_calc
 from storage.report_total_ingest_over_time import get_total_ingests_over_time
+from storage.report_unfunded import UnfundedReportForAllCollections
 
 logger = logging.getLogger(__name__)
 
@@ -106,12 +108,12 @@ def reds_report(request):
 
 @login_required
 def vicnode_funding_by_storage_product(request):
-    fundingReport = FundingReportForAllCollectionsBySP()
-    context = {'funding': {'report': fundingReport.report,
-                           'type': fundingReport.reportType,
-                           'metric': {'text': fundingReport.METRIC_TB,
-                                      'factor': fundingReport.get_conversion_factor(
-                                          fundingReport.METRIC_TB)}
+    funded = FundingReportForAllCollectionsBySP()
+    context = {'funding': {'report': funded.report,
+                           'type': funded.reportType,
+                           'metric': {'text': funded.METRIC_TB,
+                                      'factor': funded.get_conversion_factor(
+                                          funded.METRIC_TB)}
                            }}
     return render(request, 'vicnode_funding_sp.html', context)
 
@@ -139,3 +141,27 @@ def demographics_stream(request):
     :return: A CSV file with name 'demographics.csv'
     """
     return csv_stream(demographics_report(), 'demographics.csv')
+
+
+@login_required
+def unfunded_report(request):
+    unfunded = UnfundedReportForAllCollections()
+    context = {'funding': {'report': unfunded.report,
+                           'type': unfunded.reportType,
+                           'metric': {'text': unfunded.METRIC_GB,
+                                      'factor': unfunded.get_conversion_factor(
+                                          unfunded.METRIC_GB)}
+                           }}
+    return render(request, 'vicnode_unfunded.html', context)
+
+
+@login_required
+def for_code_ingest_uom(request):
+    context = report_for_code_ingest('Melbourne')
+    return render(request, 'for_percent_report.html', context)
+
+
+@login_required
+def for_code_ingest_all(request):
+    context = report_for_code_ingest('All')
+    return render(request, 'for_percent_report.html', context)

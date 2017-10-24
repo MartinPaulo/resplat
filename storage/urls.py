@@ -3,7 +3,8 @@ from django.conf.urls import url
 from storage.views import ingests_for_week, collection_status, reds_report, \
     reds_report_uom, vicnode_funding_by_storage_product, \
     difference_between_reported_and_approved, total_ingests_over_time, \
-    demographics_stream
+    demographics_stream, unfunded_report, for_code_ingest_uom, \
+    for_code_ingest_all
 
 urlpatterns = [
     url(r'^report/$', ingests_for_week),
@@ -18,5 +19,7 @@ urlpatterns = [
         difference_between_reported_and_approved),
     url(r'^total_ingest_over_time/$', total_ingests_over_time),
     url(r'^demographics/$', demographics_stream),
-
+    url(r'^vicnode_unfunded/$', unfunded_report),
+    url(r'^for_code_ingest_uom/$', for_code_ingest_uom),
+    url(r'^for_code_ingest_all/$', for_code_ingest_all),
 ]

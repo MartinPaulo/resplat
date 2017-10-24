@@ -29,3 +29,11 @@ tr:nth-child(even)		{ background-color:#ffffff; }
 .ingest_sp_time_right {
     margin-left: 355px;
 }
+
+.for_code_left{
+    float: left;
+}
+
+.for_code_right {
+    margin-left:515px;
+}

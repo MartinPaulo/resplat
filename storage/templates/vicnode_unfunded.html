@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'storage/app.css' %}"/>
+{% endblock %}
+
+{% block title %}Funding Report{% endblock %}
+
+{% load storage_extras %}
+
+{% block content %}
+
+    <h1>Funding by {{ funding.type }}</h1>
+    <table border=0 cellspacing=03 cellpadding=03 width="60%">
+        <tr class='row_thick'>
+            <td width="10">Code</td>
+            <td width="50%">Collection Name</td>
+            <td width="30%">Storage Product</td>
+            <td width="10%" class="col_right">Unfunded
+                                              ({{ funding.metric.text }})
+            </td>
+        </tr>
+        {% for row in funding.report %}
+            <tr {% if row.is_total %} class='row_total' {% endif %}>
+                <td>{{ row.code }}</td>
+                <td>{% if row.id > 0 %}
+                    <a href="{% url 'admin:storage_collection_change' row.id %}">{{ row.name }}</a>
+                {% else %}
+                    {{ row.name }}
+                {% endif %}</td>
+                <td>{{ row.product }}</td>
+                <td class="col_right">{{ row.value|multiply:funding.metric.factor|floatformat }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock content %}
