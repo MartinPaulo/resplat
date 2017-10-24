@@ -5,12 +5,15 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from storage.csv_streamer import csv_stream
-from storage.diff_reported_and_approved import \
-    get_difference_between_approved_and_reported
-from storage.funding_report import FundingReportForAllCollectionsBySP
 from storage.models import Ingest, StorageProduct, Collection
+from storage.report_demographics import demographics_report
+from storage.report_diff_reported_and_approved import \
+    get_difference_between_approved_and_reported
+from storage.report_for_code_ingest import report_for_code_ingest
+from storage.report_funding import FundingReportForAllCollectionsBySP
 from storage.report_reds import reds_123_calc
-from storage.total_ingest_over_time_report import get_total_ingests_over_time
+from storage.report_total_ingest_over_time import get_total_ingests_over_time
+from storage.report_unfunded import UnfundedReportForAllCollections
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +27,6 @@ def ingests_for_week(request, days='0'):
 
 def _date_in_past(from_date, go_back_days):
     return from_date - timedelta(days=go_back_days)
-
-
-def _get_storage_products(product_names):
-    """
-    :return: the storage products in a dictionary keyed by their name
-    """
-    results = {}
-    sp = StorageProduct.objects.filter(product_name__value__in=product_names)
-    for product in sp:
-        results[product.product_name.value] = product
-    return results
 
 
 def _ingest_counts_for_date(ingest_date, storage_products):
@@ -55,7 +47,8 @@ def _ingest_stats_for_week(request, end_date):
         'Market.Melbourne': 'UoMM',
         'Vault.Melbourne.Object': 'UoMV'
     }
-    storage_products = _get_storage_products(list(products_of_interest.keys()))
+    storage_products = StorageProduct.objects.get_by_name(
+        list(products_of_interest.keys()))
     week_data = []
     for days_past in range(0, 7):
         target_day = _date_in_past(end_date, days_past)
@@ -115,12 +108,12 @@ def reds_report(request):
 
 @login_required
 def vicnode_funding_by_storage_product(request):
-    fundingReport = FundingReportForAllCollectionsBySP()
-    context = {'funding': {'report': fundingReport.report,
-                           'type': fundingReport.reportType,
-                           'metric': {'text': fundingReport.METRIC_TB,
-                                      'factor': fundingReport.get_conversion_factor(
-                                          fundingReport.METRIC_TB)}
+    funded = FundingReportForAllCollectionsBySP()
+    context = {'funding': {'report': funded.report,
+                           'type': funded.reportType,
+                           'metric': {'text': funded.METRIC_TB,
+                                      'factor': funded.get_conversion_factor(
+                                          funded.METRIC_TB)}
                            }}
     return render(request, 'vicnode_funding_sp.html', context)
 
@@ -138,3 +131,37 @@ def difference_between_reported_and_approved(request, target='All'):
 def total_ingests_over_time(request):
     context = get_total_ingests_over_time()
     return render(request, 'total_ingest_over_time.html', context)
+
+
+@login_required
+def demographics_stream(request):
+    """
+    Export Demographics data
+    :param request: http request
+    :return: A CSV file with name 'demographics.csv'
+    """
+    return csv_stream(demographics_report(), 'demographics.csv')
+
+
+@login_required
+def unfunded_report(request):
+    unfunded = UnfundedReportForAllCollections()
+    context = {'funding': {'report': unfunded.report,
+                           'type': unfunded.reportType,
+                           'metric': {'text': unfunded.METRIC_GB,
+                                      'factor': unfunded.get_conversion_factor(
+                                          unfunded.METRIC_GB)}
+                           }}
+    return render(request, 'vicnode_unfunded.html', context)
+
+
+@login_required
+def for_code_ingest_uom(request):
+    context = report_for_code_ingest('Melbourne')
+    return render(request, 'for_percent_report.html', context)
+
+
+@login_required
+def for_code_ingest_all(request):
+    context = report_for_code_ingest('All')
+    return render(request, 'for_percent_report.html', context)

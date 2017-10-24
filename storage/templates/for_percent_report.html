@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'storage/app.css' %}"/>
+{% endblock %}
+
+{# Title is provided by the context #}
+
+{% block content %}
+    <h3>A total of {{ for_report_list | length }} FOR codes</h3>
+    <div class="for_code_ingest_section">
+        <div class="for_code_left">
+            <table border=0 cellspacing=3 cellpadding=3>
+                <tr class='row_thick'>
+                    <td width="17%">FOR code</td>
+                    <td width="58%">Description</td>
+                    <td width="25%">Ingested Size (TB)</td>
+                </tr>
+                {% for  ingest in for_report_list %}
+                    <tr>
+                        <td> {{ ingest.for_code }} </td>
+                        <td> {{ ingest.code_desc }}</td>
+                        <td class="col_right"> {{ ingest.get_for_code_ingest_size|floatformat:4 }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="for_code_right">
+            <img src="/media{{ image }}">
+        </div>
+        <div style="clear:both"></div>
+    </div>
+{% endblock content %}
