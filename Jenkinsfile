@@ -10,7 +10,7 @@ pipeline {
 			}
 			steps {
 				sh 'apt-get update'
-				sh 'apt-get upgrade'
+				//sh 'apt-get upgrade'
 				sh 'apt-get install -y python3-pip python3-dev python3-tk apache2 libapache2-mod-wsgi-py3'
 				sh 'apt-get install -y postgresql postgresql-contrib'
 				sh 'apt-get install -y git curl libpq-dev'
