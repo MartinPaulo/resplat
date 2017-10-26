@@ -4,8 +4,22 @@ from decimal import Decimal
 
 from storage.models import Ingest, Collection, Request
 
+
+# following are the column names of the output rows
+COLLECTION_NAME = 'Collection Name'
+NODE_ID = 'Node ID'
+APPROVED_TB = 'Research Data Approved (TB)'
+AVAILABLE_TB = 'Research Data Available (Ready) (TB)'
+COMMITTED_TB = 'Total Storage Allocated (Committed) (TB)'
+COMPLETED = '% ingest completed'
+TOTAL_COST = 'Total Cost'
+
+MARKET_MONASH = 'Market.Monash'
+VAULT_MONASH = 'Vault.Monash'
+
 # following constants are again hard coded label values... If the label is
 # changed, the code breaks...
+
 COMPUTATIONAL_STORAGE = ['Computational.Monash.Performance',
                          'Computational.Melbourne']
 
@@ -40,8 +54,8 @@ def _latest_data_from_ingests(storage_products):
     for ingest in ingests:
         if ingest.collection.id not in result:
             result[ingest.collection.id] = OrderedDict()
-        sp_name = ingest.storage_product.product_name.value.strip()
-        result[ingest.collection.id][sp_name] = ingest
+        storage_product_name = ingest.storage_product.product_name.value.strip()
+        result[ingest.collection.id][storage_product_name] = ingest
     return result
 
 
@@ -51,33 +65,12 @@ def _column_name_index_map():
              the values being the column index number
     """
     result = OrderedDict()
-    result['Collection Name'] = 0
-    result['Node ID'] = 1
-    result['FOR 1'] = 2
-    result['FOR 2'] = 3
-    result['FOR 3'] = 4
-    result['FOR 4'] = 5
-    result['FOR 5'] = 6
-    result['FOR 6'] = 7
-    result['FOR 7'] = 8
-    result['FOR 8'] = 9
-    result['FOR 9'] = 10
-    result['FOR 10'] = 11
-    result['Research Data Approved (TB) [A]'] = 12
-    result['Research Data Available(Ready) (TB) [B]'] = 13
-    result['Total Storage Allocated (Committed) (TB) [C]'] = 14
-    result['ReDS1/2 - Total Raw Disk Filled - SSD (TB) [D]'] = 15
-    result['ReDS1/2 - Total Raw Disk Filled - Tier 1 (TB) [E]'] = 16
-    result['ReDS1/2 - Total Raw Disk Filled - Tier 2/3 (TB) [F]'] = 17
-    result['ReDS1/2 - Total Raw Tape Filled (TB) [G]'] = 18
-    result['ReDS1/2 - Total Raw Storage Filled [H]'] = 19
-    result['ReDS3 - Total Raw Disk Filled - SSD (TB) [D]'] = 20
-    result['ReDS3 - Total Raw Disk Filled - Tier 1 (TB) [E]'] = 21
-    result['ReDS3 - Total Raw Disk Filled - Tier 2/3 (TB) [F]'] = 22
-    result['ReDS3 - Total Raw Tape Filled (TB) [G]'] = 23
-    result['ReDS3 - Total Raw Storage Filled [H]'] = 24
-    result['Total Cost [I]'] = 25
-    result['% ingest completed'] = 26
+    column_names = [COLLECTION_NAME, NODE_ID, 'FOR 1', 'FOR 2', 'FOR 3',
+                    'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8', 'FOR 9',
+                    'FOR 10', APPROVED_TB, AVAILABLE_TB,
+                    COMMITTED_TB, TOTAL_COST, COMPLETED]
+    for i, name in enumerate(column_names):
+        result[name] = i
     return result
 
 
@@ -89,92 +82,48 @@ def _allocation_totals(allocations, columns, storage_products, i_map):
     :param i_map:
     :return:
     """
-    tier1_value = Decimal(0.0)
     total_used_value = Decimal(0.0)
     raw_alloc_map = {sp.product_name.value: Decimal(0.0) for sp in
                      storage_products}
     for allocation in allocations:
         storage_product = allocation.storage_product
         if storage_product in storage_products:
-            sp_name = storage_product.product_name.value.strip()
-            if sp_name in MELBOURNE_STORAGE:
+            storage_product_name = storage_product.product_name.value.strip()
+            if storage_product_name in MELBOURNE_STORAGE:
                 raw_alloc_map[
-                    sp_name] += allocation.size_tb / storage_product.raw_conversion_factor
-                if sp_name in COMPUTATIONAL_STORAGE:
-                    tier1_value = tier1_value + allocation.size_tb / storage_product.raw_conversion_factor
+                    storage_product_name] += allocation.size_tb / storage_product.raw_conversion_factor
+                if storage_product_name in COMPUTATIONAL_STORAGE:
                     total_used_value += allocation.size
-            elif sp_name in ['Vault.Monash']:
-                raw_alloc_map['Vault.Monash'] += allocation.size_tb * Decimal(
+            elif storage_product_name in [VAULT_MONASH]:
+                raw_alloc_map[VAULT_MONASH] += allocation.size_tb * Decimal(
                     0.069)
-                raw_alloc_map['Market.Monash'] += allocation.size_tb * Decimal(
+                raw_alloc_map[MARKET_MONASH] += allocation.size_tb * Decimal(
                     2.0)
-            elif sp_name in ['Market.Monash']:
-                raw_alloc_map['Vault.Monash'] += allocation.size_tb * Decimal(
+            elif storage_product_name in [MARKET_MONASH]:
+                raw_alloc_map[VAULT_MONASH] += allocation.size_tb * Decimal(
                     1.752)
-                raw_alloc_map['Market.Monash'] += allocation.size_tb * Decimal(
+                raw_alloc_map[MARKET_MONASH] += allocation.size_tb * Decimal(
                     1.752)
-            columns[i_map['Total Cost [I]']] += allocation.capital_cost
-    columns[i_map['Total Storage Allocated (Committed) (TB) [C]']] = sum(
+            columns[i_map[TOTAL_COST]] += allocation.capital_cost
+    columns[i_map[COMMITTED_TB]] = sum(
         raw_alloc_map.values())  # Raw size - Total Allocation
-    return tier1_value, total_used_value
+    return total_used_value
 
 
 def _ingest_totals(collection, filtered_ingests, total_used_value):
-    tier23_value = Decimal(0.0)
-    tape_value = Decimal(0.0)
     collection_ingests = filtered_ingests.get(collection.id)
     if collection_ingests:
         for storage_product_name in collection_ingests.keys():
-            ingest = collection_ingests.get(storage_product_name)
-            used_value = ingest.used_capacity
-            if not used_value:
+            if storage_product_name in COMPUTATIONAL_STORAGE:
                 continue
-            storage_product = ingest.storage_product
-            if storage_product_name not in COMPUTATIONAL_STORAGE:
-                total_used_value += used_value
-            if storage_product_name in ['Vault.Monash']:
-                tier23_value += used_value * Decimal(0.069)
-                tape_value += used_value * Decimal(2.0)
-            elif storage_product_name in ['Market.Monash']:
-                tier23_value += used_value * Decimal(1.752)
-                tape_value += used_value * Decimal(1.752)
-            elif storage_product_name in ['Vault.Melbourne.Object']:
-                tape_value += used_value / storage_product.raw_conversion_factor
-            elif storage_product_name in ['Market.Melbourne']:
-                tier23_value += used_value / storage_product.raw_conversion_factor
-    # convert GB to TerraBytes
-    tier23_value = _get_tb_from_gb(tier23_value)
-    tape_value = _get_tb_from_gb(tape_value)
-    return tape_value, tier23_value, total_used_value
-
-
-def _set_reds3_totals(columns, i_map, tape_value, tier1_value, tier23_value):
-    columns[
-        i_map['ReDS3 - Total Raw Disk Filled - Tier 1 (TB) [E]']] = tier1_value
-    columns[i_map[
-        'ReDS3 - Total Raw Disk Filled - Tier 2/3 (TB) [F]']] = tier23_value
-    columns[i_map['ReDS3 - Total Raw Tape Filled (TB) [G]']] = tape_value
-    # following doesn't ever appear to be set...
-    zero = columns[i_map['ReDS3 - Total Raw Disk Filled - SSD (TB) [D]']]
-    grand_total = zero + tier1_value + tier23_value + tape_value
-    columns[i_map['ReDS3 - Total Raw Storage Filled [H]']] = grand_total
-
-
-def _set_merit_totals(columns, i_map, tape_value, tier1_value, tier23_value):
-    columns[i_map[
-        'ReDS1/2 - Total Raw Disk Filled - Tier 1 (TB) [E]']] = tier1_value
-    columns[i_map[
-        'ReDS1/2 - Total Raw Disk Filled - Tier 2/3 (TB) [F]']] = tier23_value
-    columns[i_map['ReDS1/2 - Total Raw Tape Filled (TB) [G]']] = tape_value
-    # following doesn't ever appear to be set...
-    zero = columns[i_map['ReDS1/2 - Total Raw Disk Filled - SSD (TB) [D]']]
-    grand_total = zero + tier1_value + tier23_value + tape_value
-    columns[i_map['ReDS1/2 - Total Raw Storage Filled [H]']] = grand_total
+            ingest = collection_ingests.get(storage_product_name)
+            if not ingest.used_capacity:
+                continue
+            total_used_value += ingest.used_capacity
+    return total_used_value
 
 
 def _collection_for_codes(collection, columns, i_map):
-    # Cols 2 thru 11, insert into columns at most 10 FOR codes for
-    # this collection
     count = 0
     # fetch, at most 10, domains for the collection
     for domain in collection.domains.all()[:10]:
@@ -213,43 +162,23 @@ def reds_123_calc(for_storage_products):
             logger.exception("First application not found?")
             continue  # Error, do not output record for this collection
 
-        # default column values to 0
-        columns = [0 for key in i_map]
-        # here we only care the approved application
+        # we only care the approved applications
         if status == 'Approved':
-            # Col 0 - Collection Name
-            columns[i_map['Collection Name']] = collection.name
-            # Col 1 - Collection Id, set to first application code
-            columns[i_map['Node ID']] = first_application.code
+            # set default column values to 0
+            columns = [0 for key in i_map]
+            columns[i_map[COLLECTION_NAME]] = collection.name
+            columns[i_map[NODE_ID]] = first_application.code
             _collection_for_codes(collection, columns, i_map)
-            # Col 12 - Total Allocation
-            columns[i_map[
-                'Research Data Approved (TB) [A]']] = collection.total_allocation
-
-            tier1_value, total_used_value = _allocation_totals(
+            columns[i_map[APPROVED_TB]] = collection.total_allocation
+            total_used_value = _allocation_totals(
                 collection.allocations.all(), columns, for_storage_products,
                 i_map)
-
-            tape_value, tier23_value, total_used_value = _ingest_totals(
+            total_used_value = _ingest_totals(
                 collection, filtered_ingests, total_used_value)
-
-            columns[i_map[
-                'Research Data Available(Ready) (TB) [B]']] = _get_tb_from_gb(
-                total_used_value)
-
-            if first_application.scheme.value == VALID_SCHEMES['Merit']:
-                _set_merit_totals(columns, i_map, tape_value, tier1_value,
-                                  tier23_value)
-            elif first_application.scheme.value == VALID_SCHEMES['ReDS3']:
-                _set_reds3_totals(columns, i_map, tape_value, tier1_value,
-                                  tier23_value)
-
-            if columns[i_map['Research Data Approved (TB) [A]']] > 0:
-                # Col 26 - Percent Ingested'
-                columns[i_map['% ingest completed']] = columns[i_map[
-                    'Research Data Available(Ready) (TB) [B]']] / columns[
-                                                           i_map[
-                                                               'Research Data Approved (TB) [A]']]
+            columns[i_map[AVAILABLE_TB]] = _get_tb_from_gb(total_used_value)
+            if columns[i_map[APPROVED_TB]] > 0:
+                columns[i_map[COMPLETED]] = columns[i_map[AVAILABLE_TB]] / \
+                                            columns[i_map[APPROVED_TB]]
             result.append(columns)
 
     return result
