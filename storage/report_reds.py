@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from storage.models import Ingest, Collection, Request
 
-
 # following are the column names of the output rows
 COLLECTION_NAME = 'Collection Name'
 NODE_ID = 'Node ID'
@@ -23,10 +22,8 @@ VAULT_MONASH = 'Vault.Monash'
 COMPUTATIONAL_STORAGE = ['Computational.Monash.Performance',
                          'Computational.Melbourne']
 
-MELBOURNE_STORAGE = ['Computational.Monash.Performance',
-                     'Computational.Melbourne',
-                     'Market.Melbourne',
-                     'Vault.Melbourne.Object']
+MELBOURNE_STORAGE = COMPUTATIONAL_STORAGE + ['Market.Melbourne',
+                                             'Vault.Melbourne.Object']
 
 VALID_SCHEMES = {'Merit': 'RDSI Merit', 'ReDS3': 'RDSI Board (ReDS3)'}
 
@@ -76,13 +73,14 @@ def _column_name_index_map():
 
 def _allocation_totals(allocations, columns, storage_products, i_map):
     """
-    :param allocations:
-    :param columns: *mutated*
-    :param storage_products:
-    :param i_map:
-    :return:
+    :param allocations: the allocations to be summed
+    :param columns: *mutated* the allocation sums are written into the columns
+    :param storage_products: the storage products whose allocations are to be
+                             summed
+    :param i_map: a map of column names and their index values
+    :return: the sum of the allocation sizes
     """
-    total_used_value = Decimal(0.0)
+    total_used = Decimal(0.0)
     raw_alloc_map = {sp.product_name.value: Decimal(0.0) for sp in
                      storage_products}
     for allocation in allocations:
@@ -93,7 +91,7 @@ def _allocation_totals(allocations, columns, storage_products, i_map):
                 raw_alloc_map[
                     storage_product_name] += allocation.size_tb / storage_product.raw_conversion_factor
                 if storage_product_name in COMPUTATIONAL_STORAGE:
-                    total_used_value += allocation.size
+                    total_used += allocation.size
             elif storage_product_name in [VAULT_MONASH]:
                 raw_alloc_map[VAULT_MONASH] += allocation.size_tb * Decimal(
                     0.069)
@@ -105,12 +103,18 @@ def _allocation_totals(allocations, columns, storage_products, i_map):
                 raw_alloc_map[MARKET_MONASH] += allocation.size_tb * Decimal(
                     1.752)
             columns[i_map[TOTAL_COST]] += allocation.capital_cost
-    columns[i_map[COMMITTED_TB]] = sum(
-        raw_alloc_map.values())  # Raw size - Total Allocation
-    return total_used_value
+    # Raw size - Total Allocation
+    columns[i_map[COMMITTED_TB]] = sum(raw_alloc_map.values())
+    return total_used
 
 
-def _ingest_totals(collection, filtered_ingests, total_used_value):
+def _non_compute_ingests_used_capacity(collection, filtered_ingests):
+    """
+    :param collection: the collection whose ingests are to be summed
+    :param filtered_ingests: the last ingests by storage product
+    :return: the sum of the used capacity for non compute ingests
+    """
+    capacity_used = 0
     collection_ingests = filtered_ingests.get(collection.id)
     if collection_ingests:
         for storage_product_name in collection_ingests.keys():
@@ -119,11 +123,16 @@ def _ingest_totals(collection, filtered_ingests, total_used_value):
             ingest = collection_ingests.get(storage_product_name)
             if not ingest.used_capacity:
                 continue
-            total_used_value += ingest.used_capacity
-    return total_used_value
+            capacity_used += ingest.used_capacity
+    return capacity_used
 
 
-def _collection_for_codes(collection, columns, i_map):
+def _get_collection_for_codes(collection, columns, i_map):
+    """
+    :param collection: the source collection
+    :param columns: *mutated* the for code values are written into the columns
+    :param i_map: a map of column names and their index values
+    """
     count = 0
     # fetch, at most 10, domains for the collection
     for domain in collection.domains.all()[:10]:
@@ -140,7 +149,7 @@ def reds_123_calc(for_storage_products):
     """
     result = []
     i_map = _column_name_index_map()
-    # put the column names at the top of the results being returned
+    # put the column names as the first row of the results being returned
     result.append(list(i_map.keys()))
 
     filtered_ingests = _latest_data_from_ingests(for_storage_products)
@@ -151,34 +160,35 @@ def reds_123_calc(for_storage_products):
             continue
 
         try:
-            first_application = Request.objects.get(
-                code=collection.application_code)
-            if not first_application or not first_application.status:
+            request = Request.objects.get(code=collection.application_code)
+            if not request or not request.status:
                 continue
-            status = first_application.status.value
-            if first_application.scheme.value not in VALID_SCHEMES.values():
+            status = request.status.value
+            if request.scheme.value not in VALID_SCHEMES.values():
                 continue
         except (Request.DoesNotExist, Request.MultipleObjectsReturned):
-            logger.exception("First application not found?")
-            continue  # Error, do not output record for this collection
+            logger.exception("Original request not found?")
+            continue  # unexpected, so do not output a row for this collection
 
-        # we only care the approved applications
+        # we only want data for the approved applications
         if status == 'Approved':
-            # set default column values to 0
+            # set all the column values to 0
             columns = [0 for key in i_map]
             columns[i_map[COLLECTION_NAME]] = collection.name
-            columns[i_map[NODE_ID]] = first_application.code
-            _collection_for_codes(collection, columns, i_map)
+            columns[i_map[NODE_ID]] = request.code
+            _get_collection_for_codes(collection, columns, i_map)
             columns[i_map[APPROVED_TB]] = collection.total_allocation
-            total_used_value = _allocation_totals(
-                collection.allocations.all(), columns, for_storage_products,
-                i_map)
-            total_used_value = _ingest_totals(
-                collection, filtered_ingests, total_used_value)
-            columns[i_map[AVAILABLE_TB]] = _get_tb_from_gb(total_used_value)
+            total_used = _allocation_totals(collection.allocations.all(),
+                                            columns, for_storage_products,
+                                            i_map)
+            total_used += _non_compute_ingests_used_capacity(collection,
+                                                             filtered_ingests)
+            columns[i_map[AVAILABLE_TB]] = _get_tb_from_gb(total_used)
             if columns[i_map[APPROVED_TB]] > 0:
-                columns[i_map[COMPLETED]] = columns[i_map[AVAILABLE_TB]] / \
-                                            columns[i_map[APPROVED_TB]]
+                columns[i_map[COMPLETED]] = round(
+                    columns[i_map[AVAILABLE_TB]] / columns[
+                        i_map[APPROVED_TB]] * 100,
+                    2)
             result.append(columns)
 
     return result
