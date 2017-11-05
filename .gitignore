@@ -8,3 +8,19 @@
 /media/report_graph/total_ingest_over_time.png
 /heat/environment.yaml
 /media/report_graph/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
