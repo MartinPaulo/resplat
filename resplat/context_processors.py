@@ -1,6 +1,7 @@
 from django.conf import settings
 
 
+# noinspection PyUnusedLocal
 def from_settings(request):
     return {
         'ENVIRONMENT_NAME': settings.ENVIRONMENT_NAME,
