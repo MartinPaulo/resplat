@@ -18,12 +18,12 @@ class Bunch(list):
 
 
 class UnfundedReportRow(ReportRow):
-    def __init__(self, collection, storage_product, unfundedValue):
+    def __init__(self, collection, storage_product, unfunded_value):
         self.id = collection.id
         self.code = collection.application_code
         self.name = str(collection.name)
         self.product = str(storage_product)
-        self.value = unfundedValue
+        self.value = unfunded_value
 
     def add(self, another_unfunded_row):
         self.value = self.value + another_unfunded_row.value
@@ -43,6 +43,7 @@ class UnfundedReportForAllCollections(AbstractFundingReportBase):
 
     def __init__(self):
         super().__init__()
+        # noinspection PyTypeChecker
         self.total = UnfundedReportRow(self.GLOBAL_TOTAL_COLLECTION,
                                        FundingReportRow.TOTAL_KEY[1],
                                        Decimal(0.0))
