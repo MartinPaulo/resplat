@@ -1,0 +1,81 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Ingests Over Time{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'storage/app.css' %}"/>
+    <link rel="stylesheet" type="text/css"
+          href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.css"/>
+{% endblock %}
+
+{% block content %}
+    {% if ingest_not_found %}
+        <h1>Total VicNode Ingest Over Time</h1>
+        <br/>
+        <p>Ingest Data Not Found </p>
+    {% else %}
+        <h1>Total VicNode Ingest Over Time ({{ start_date }}
+            - {{ end_date }})</h1>
+        <br/>
+        <div class="ingest_sp_time_section">
+            <div class="ingest_sp_time_left">
+                <table border='0' cellspacing='3' cellpadding='3'>
+                    <tr class='row_thick'>
+                        <td width="10%">No.</td>
+                        <td width="30%">Storage Product</td>
+                        <td width="60%">Ingested Size (TB)</td>
+                    </tr>
+                    {% for  sp_ingest in sp_ingest_list %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td> {{ sp_ingest.sp_name }} </td>
+                            <td class="col_right"> {{ sp_ingest.total_size|floatformat:4 }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tr class='row_thick col_right'>
+                        <td colspan="2">Total:</td>
+                        <td>{{ total_size|floatformat:4 }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div id='chart' class='chart-wrapper, ingest_sp_time_right'
+                 style="height: 500px;">
+                <svg></svg>
+            </div>
+            <div style="clear: both"></div>
+        </div>
+        <script src="//d3js.org/d3.v3.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.js"></script>
+        <script>
+            'use strict';
+            let data = {{ ingest_storage_products | safe }};
+            nv.addGraph(
+                function () {
+                    let chart = nv.models.stackedAreaChart()
+                        .margin({right: 100})
+                        .x(d => d[0])
+                        .y(d => d[1])
+                        .useInteractiveGuideline(true)
+                        .rightAlignYAxis(true)
+                        .showControls(true)
+                        .clipEdge(true);
+                    chart.xAxis
+                        .tickFormat(function (d) {
+                            const date = new Date(d * 1000);
+                            return d3.time.format('%d-%m-%Y')(date)
+                        });
+                    chart.yAxis
+                        .tickFormat(d3.format(',.2f'));
+                    d3.select('#chart svg')
+                        .datum(data)
+                        .call(chart);
+                    nv.utils.windowResize(chart.update);
+                    return chart;
+                }
+            )
+        </script>
+    {% endif %}
+{% endblock content %}
