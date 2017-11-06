@@ -4,8 +4,7 @@ pipeline {
 		stage('Build') {
 			agent { 
 				dockerfile {
-					image 'ubuntu:16.04'
-					additionalBuildArgs '-t resplatimg --build-arg'
+					additionalBuildArgs '-t resplatimg'
 				}
 			}
 			steps {
