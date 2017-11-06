@@ -5,7 +5,57 @@ from matplotlib import pyplot as plt
 
 from resplat.settings import MEDIA_ROOT
 from storage.models import StorageProduct, Ingest, Domain
-from storage.report_total_ingest_over_time import ALL_COLORS
+
+dark_orange = [1, 140 / 255, 0]
+dark_golden_rod = [184 / 255, 134 / 255, 11 / 255]
+yellow_green = [154 / 255, 205 / 255, 50 / 255]
+olive_green = [107 / 255, 142 / 255, 35 / 255]
+lime_green = [50 / 255, 205 / 255, 50 / 255]
+medium_sea_green = [60 / 255, 179 / 255, 113 / 255]
+forest_green = [34 / 255, 139 / 255, 34 / 255]
+light_sea_green = [32 / 255, 178 / 255, 170 / 255]
+cadet_blue = [95 / 255, 158 / 255, 160 / 255]
+royal_blue = [65 / 255, 105 / 255, 225 / 255]
+corn_flower_blue = [100 / 255, 149 / 255, 237 / 255]
+light_pink = [1, 182 / 255, 193 / 255]
+blue_violet = [138 / 255, 43 / 255, 226 / 255]
+dark_slate_blue = [72 / 255, 61 / 255, 139 / 255]
+medium_purple = [147 / 255, 112 / 255, 219 / 255]
+dark_magenta = [139 / 255, 0, 139 / 255]
+medium_orchid = [186 / 255, 85 / 255, 211 / 255]
+chocolate = [210 / 255, 105 / 255, 30 / 255]
+dark_cyan = [0, 139 / 255, 139 / 255]
+blue = [0, 0, 128 / 255]
+dark_red = [139 / 255, 0, 0]
+floral_white = [1, 250 / 255, 240 / 255]
+peru = [205 / 255, 133 / 255, 63 / 255]
+dark_slate_gray = [47 / 255, 79 / 255, 79 / 255]
+
+ALL_COLORS = [dark_orange,
+              dark_golden_rod,
+              yellow_green,
+              olive_green,
+              lime_green,
+              medium_sea_green,
+              forest_green,
+              light_sea_green,
+              cadet_blue,
+              royal_blue,
+              corn_flower_blue,
+              light_pink,
+              blue_violet,
+              dark_slate_blue,
+              medium_purple,
+              dark_magenta,
+              medium_orchid,
+              chocolate,
+              dark_cyan,
+              blue,
+              dark_red,
+              floral_white,
+              peru,
+              dark_slate_gray
+              ]
 
 MONASH_STORAGE_PRODUCTS = ['Computational.Monash.Performance', 'Vault.Monash',
                            'Market.Monash']
@@ -126,6 +176,7 @@ def _trim_for_2_dig_code(for_code):
 def _is_two_digit_code(for_code):
     return len(for_code) == 2
 
+# Todo: remove the matplotlib from requirements.txt when this is removed...
 
 def _draw_pie_chart(for_code_ingest_list, title, save_path):
     code_labels = []
