@@ -48,3 +48,11 @@ STATIC_ROOT = '/var/www/static'
 #     EMAIL_HOST_PASSWORD = ''
 #     EMAIL_USE_TLS = False
 #     DEFAULT_FROM_EMAIL = 'debug@reporting.uom.edu.au'
+
+
+DEBUG = False
+ALLOWED_HOSTS = ['*']
+SECRET_KEY = 'a+&cd(830b40#dl!ju5@*nzov4^nl@kvefof_la5p%1)@k7m=1'
+
+
+
