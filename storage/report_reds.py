@@ -172,8 +172,8 @@ def reds_123_calc(for_storage_products):
 
         # we only want data for the approved applications
         if status == 'Approved':
-            # set all the column values to 0
-            columns = [0 for key in i_map]
+            # set all the initial column values to 0
+            columns = [0] * len(i_map)
             columns[i_map[COLLECTION_NAME]] = collection.name
             columns[i_map[NODE_ID]] = request.code
             _get_collection_for_codes(collection, columns, i_map)
