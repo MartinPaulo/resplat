@@ -1,5 +1,9 @@
+import logging
+
 from django.contrib.admin.filters import AllValuesFieldListFilter, \
     RelatedOnlyFieldListFilter, SimpleListFilter
+
+logger = logging.getLogger(__name__)
 
 
 class DropDownFilter(AllValuesFieldListFilter):
@@ -34,7 +38,8 @@ class FieldOfResearchFilter(SimpleListFilter):
             index = self.codes.index(self.value())
             return queryset.filter(code__gte=self.codes[index],
                                    code__lt=self.codes[index + 1])
-        except ValueError as ve:
+        except ValueError:
+            logger.exception("Unexpected error when filtering")
             return queryset
 
     def lookups(self, request, model_admin):
