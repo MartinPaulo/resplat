@@ -176,6 +176,7 @@ def _trim_for_2_dig_code(for_code):
 def _is_two_digit_code(for_code):
     return len(for_code) == 2
 
+
 # Todo: remove the matplotlib from requirements.txt when this is removed...
 
 def _draw_pie_chart(for_code_ingest_list, title, save_path):
