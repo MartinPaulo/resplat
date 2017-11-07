@@ -1,5 +1,6 @@
 # User-specific stuff:
 .idea/
+*.swp
 
 ## Plugin-specific files:
 
@@ -7,3 +8,19 @@
 /heat/dan.sh
 /heat/environment.yaml
 /media/report_graph/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
