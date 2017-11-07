@@ -11,8 +11,8 @@ from storage.report_diff_reported_and_approved import \
     get_difference_between_approved_and_reported
 from storage.report_for_code_ingest import report_for_code_ingest
 from storage.report_funding import FundingReportForAllCollectionsBySP
-from storage.report_reds import reds_123_calc
 from storage.report_ingests_over_time import get_ingests_over_time
+from storage.report_reds import reds_123_calc
 from storage.report_unfunded import UnfundedReportForAllCollections
 
 logger = logging.getLogger(__name__)
