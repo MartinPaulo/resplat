@@ -11,20 +11,34 @@ from storage.models import Ingest
 class StorageProductIngests(object):
     """
     Holds the ingest values over time for a storage product
+
     date_ranges: the date time ranges covered
     storage_product_name: the name of the storage product
-    ingest_sum_list:  a ingest sum list which hold the each date ingest over
-                      time in date asc order
+    ingest_sums: an iterable of ingest sums for the storage product for each
+                 day in the date range in date asc order
     """
 
-    def __init__(self, storage_product_name, date_ranges, ingest_sum_list):
+    def __init__(self, storage_product_name, date_ranges, ingest_sums):
         self.storage_product_name = storage_product_name
         self.date_ranges = date_ranges
-        self.ingest_sum_list = ingest_sum_list
+        self.ingest_sum_list = self._remove_zeros(ingest_sums)
 
     def __str__(self):
         return '{} - {}'.format(self.storage_product_name,
                                 self.ingest_sum_list)
+
+    @staticmethod
+    def _remove_zeros(values):
+        result = []
+        prev_ingest_sum = 0
+        for ingest_sum in values:
+            # if the current days sum is 0 we just copy the previous days sum
+            if ingest_sum != 0:
+                prev_ingest_sum = ingest_sum
+            else:
+                ingest_sum = prev_ingest_sum
+            result.append(float(ingest_sum))
+        return result
 
     def total_size(self):
         """
@@ -109,9 +123,8 @@ def _daily_ingests_grouped_by_storage_product():
                                              Max('extraction_date'))
     results = []
     for storage_product in storage_products:
-        storage_product_id = storage_product['storage_product__id']
         daily_ingest_storage_product_sum = Ingest.objects.filter(
-            storage_product__id=storage_product_id).values(
+            storage_product__id=storage_product['storage_product__id']).values(
             'extraction_date', 'storage_product_id').annotate(
             ingest_size=Sum('used_capacity')).order_by('extraction_date')
         ingest_sum_dict = _get_date_ordered_dict_with_zero_values(
@@ -121,22 +134,7 @@ def _daily_ingests_grouped_by_storage_product():
             extraction_date = daily_sum['extraction_date']
             ingest_sum_size = daily_sum['ingest_size']
             ingest_sum_dict[extraction_date] = ingest_sum_size / 1000
-        values = _remove_zeros(ingest_sum_dict.values())
-        store_product_ingest = StorageProductIngests(
+        results.append(StorageProductIngests(
             storage_product['storage_product__product_name__value'],
-            [*ingest_sum_dict], values)
-        results.append(store_product_ingest)
+            [*ingest_sum_dict], ingest_sum_dict.values()))
     return results
-
-
-def _remove_zeros(values):
-    result = []
-    prev_ingest_sum = 0
-    for ingest_sum in values:
-        # if the current days sum is zero we just copy the previous day's
-        if ingest_sum != 0:
-            prev_ingest_sum = ingest_sum
-        else:
-            ingest_sum = prev_ingest_sum
-        result.append(float(ingest_sum))
-    return result
