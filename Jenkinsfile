@@ -8,7 +8,7 @@ pipeline {
 				}
 			}
 			steps {
-				sh 'curl http://localhost'
+				sh 'python --version'
 			}
 		}
 	}
