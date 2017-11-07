@@ -18,7 +18,7 @@ class DemographicsRow:
         self.supporting_institution = None
 
     def __str__(self):
-        return f'{vars(self)}'
+        return '%s' % vars(self)
 
     def data(self):
         """
