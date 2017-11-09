@@ -10,11 +10,12 @@ class ForCodeReportOptions:
     ALL = 'All'
 
 
-MONASH_STORAGE_PRODUCTS = ['Computational.Monash.Performance', 'Vault.Monash',
-                           'Market.Monash']
-UOM_STORAGE_PRODUCTS = ['Computational.Melbourne', 'Market.Melbourne',
-                        'Vault.Melbourne.Object']
-ALL_STORAGE_PRODUCTS = MONASH_STORAGE_PRODUCTS + UOM_STORAGE_PRODUCTS
+class StorageProducts:
+    MONASH_STORAGE_PRODUCTS = ['Computational.Monash.Performance',
+                               'Vault.Monash', 'Market.Monash']
+    UOM_STORAGE_PRODUCTS = ['Computational.Melbourne', 'Market.Melbourne',
+                            'Vault.Melbourne.Object']
+    ALL_STORAGE_PRODUCTS = MONASH_STORAGE_PRODUCTS + UOM_STORAGE_PRODUCTS
 
 
 class ForCodeIngest(object):
@@ -99,10 +100,10 @@ def _sorted_for_code_ingests(for_code_ingest_dict, is_reverse_order):
 def report_for_code_ingest(org_type):
     title = 'Data ingested split by 2-digit FOR code - '
     if org_type == ForCodeReportOptions.MELBOURNE:
-        storage_products = UOM_STORAGE_PRODUCTS
+        storage_products = StorageProducts.UOM_STORAGE_PRODUCTS
         title += 'University of Melbourne'
     else:
-        storage_products = ALL_STORAGE_PRODUCTS
+        storage_products = StorageProducts.ALL_STORAGE_PRODUCTS
         title += ForCodeReportOptions.ALL
 
     storage_products = list(
