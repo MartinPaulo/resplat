@@ -1,9 +1,14 @@
 import json
+from decimal import Decimal
 from operator import methodcaller
 
-from decimal import Decimal
-
 from storage.models import StorageProduct, Ingest, Domain
+
+
+class ForCodeReportOptions:
+    MELBOURNE = 'Melbourne'
+    ALL = 'All'
+
 
 MONASH_STORAGE_PRODUCTS = ['Computational.Monash.Performance', 'Vault.Monash',
                            'Market.Monash']
@@ -93,12 +98,12 @@ def _sorted_for_code_ingests(for_code_ingest_dict, is_reverse_order):
 
 def report_for_code_ingest(org_type):
     title = 'Data ingested split by 2-digit FOR code - '
-    if org_type == 'Melbourne':
+    if org_type == ForCodeReportOptions.MELBOURNE:
         storage_products = UOM_STORAGE_PRODUCTS
         title += 'University of Melbourne'
     else:
         storage_products = ALL_STORAGE_PRODUCTS
-        title += 'All'
+        title += ForCodeReportOptions.ALL
 
     storage_products = list(
         StorageProduct.objects.filter(
@@ -115,7 +120,7 @@ def report_for_code_ingest(org_type):
     for ingest in ingests:
         collection_id = ingest['collection_id']
         used_capacity = ingest['used_capacity']
-        if used_capacity is None: # legacy data can return None...
+        if used_capacity is None:  # legacy data can return None...
             used_capacity = Decimal(0.0)
         used_capacity += collection_used_totals.get(collection_id, 0)
         collection_used_totals[collection_id] = used_capacity

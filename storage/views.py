@@ -9,7 +9,8 @@ from storage.models import Ingest, StorageProduct, Collection
 from storage.report_demographics import demographics_report
 from storage.report_diff_reported_and_approved import \
     get_difference_between_approved_and_reported
-from storage.report_for_code_ingest import report_for_code_ingest
+from storage.report_for_code_ingest import report_for_code_ingest, \
+    ForCodeReportOptions
 from storage.report_funding import FundingReportForAllCollectionsBySP
 from storage.report_ingests_over_time import get_ingests_over_time
 from storage.report_reds import reds_123_calc
@@ -157,11 +158,11 @@ def unfunded_report(request):
 
 @login_required
 def for_code_ingest_uom(request):
-    context = report_for_code_ingest('Melbourne')
+    context = report_for_code_ingest(ForCodeReportOptions.MELBOURNE)
     return render(request, 'for_percent_report.html', context)
 
 
 @login_required
 def for_code_ingest_all(request):
-    context = report_for_code_ingest('All')
+    context = report_for_code_ingest(ForCodeReportOptions.ALL)
     return render(request, 'for_percent_report.html', context)
