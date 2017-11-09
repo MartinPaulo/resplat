@@ -5,6 +5,8 @@
     {% load static %}
     <link rel="stylesheet" type="text/css"
           href="{% static 'storage/app.css' %}"/>
+    <link rel="stylesheet" type="text/css"
+          href="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.css"/>
 {% endblock %}
 
 {# Title is provided by the context #}
@@ -28,9 +30,53 @@
                 {% endfor %}
             </table>
         </div>
-        <div class="for_code_right">
-            <img src="/media{{ image }}">
+        <div id='chart' class='chart-wrapper, for_code_right'
+             style="height: 50em;">
+            <svg></svg>
         </div>
-        <div style="clear:both"></div>
+{#        <div style="clear:both"></div>#}
+        <script src="//d3js.org/d3.v3.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.js"></script>
+        <script>
+            'use strict';
+            let data = {{ for_percents | safe | default:'[]' }};
+            nv.addGraph(
+                function () {
+                    let chart = nv.models.multiBarHorizontalChart()
+                        .x(function (d) {
+                            return d.code
+                        })
+                        .y(function (d) {
+                            return d.percentage
+                        })
+                        .margin({top: 30, right: 20, bottom: 50, left: 175})
+                        .showValues(true)
+                        .duration(350)
+                        .showControls(false);
+
+                    chart.xAxis.axisLabel('FOR code');
+                    chart.yAxis.axisLabel('Ingested Size (TB)');
+                    chart.yAxis.tickFormat(d3.format(',.2f'));
+                    chart.barColor(function (d, i) {
+                            const colors = d3.scale.category20c().range();
+                            return colors[i % colors.length - 1];
+                        }
+                    );
+                    chart.tooltip.contentGenerator(function (data) {
+                        const for_code = data["data"];
+                        return '<p><strong>' + for_code.code + ' ' +
+                            for_code.description + '</strong></p>';
+                    });
+
+                    d3.select('#chart svg')
+                        .datum(data)
+                        .call(chart);
+
+                    nv.utils.windowResize(chart.update);
+
+                    return chart;
+                }
+            )
+        </script>
     </div>
 {% endblock content %}
