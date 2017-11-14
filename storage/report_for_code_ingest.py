@@ -93,11 +93,10 @@ def report_for_code_ingest(org_type):
     title = 'Data ingested split by 2-digit FOR code - '
     if org_type == ForCodeReportOptions.MELBOURNE:
         uom_names = StorageProduct.objects.get_uom_product_names()
-        storage_products = list(
-            StorageProduct.objects.get_by_name(uom_names).values())
+        storage_products = StorageProduct.objects.get_by_name(uom_names).values()
         title += 'University of Melbourne'
     else:
-        storage_products = list(StorageProduct.objects.all())
+        storage_products = StorageProduct.objects.all()
         title += ForCodeReportOptions.ALL
 
     collection_used_totals = {}
