@@ -142,6 +142,7 @@ def _get_collection_for_codes(collection, columns, i_map):
 
 def reds_123_calc(for_storage_products):
     """
+    REDS == 'Research E-Data Scheme'
     :param for_storage_products: the list of storage products to calculate for
     :return: a list of rows containing the calculated reds 123 values for
              each collection that uses one of the storage products in the
