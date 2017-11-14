@@ -10,14 +10,6 @@ class ForCodeReportOptions:
     ALL = 'All'
 
 
-class StorageProducts:
-    MONASH_STORAGE_PRODUCTS = ['Computational.Monash.Performance',
-                               'Vault.Monash', 'Market.Monash']
-    UOM_STORAGE_PRODUCTS = ['Computational.Melbourne', 'Market.Melbourne',
-                            'Vault.Melbourne.Object']
-    ALL_STORAGE_PRODUCTS = MONASH_STORAGE_PRODUCTS + UOM_STORAGE_PRODUCTS
-
-
 class ForCodeIngest(object):
     def __init__(self, for_code, code_desc='desc'):
         self.for_code = for_code
@@ -100,15 +92,13 @@ def _sorted_for_code_ingests(for_code_ingest_dict, is_reverse_order):
 def report_for_code_ingest(org_type):
     title = 'Data ingested split by 2-digit FOR code - '
     if org_type == ForCodeReportOptions.MELBOURNE:
-        storage_products = StorageProducts.UOM_STORAGE_PRODUCTS
+        uom_names = StorageProduct.objects.get_uom_product_names()
+        storage_products = list(
+            StorageProduct.objects.get_by_name(uom_names).values())
         title += 'University of Melbourne'
     else:
-        storage_products = StorageProducts.ALL_STORAGE_PRODUCTS
+        storage_products = list(StorageProduct.objects.all())
         title += ForCodeReportOptions.ALL
-
-    storage_products = list(
-        StorageProduct.objects.filter(
-            product_name__value__in=storage_products))
 
     collection_used_totals = {}
     # the latest Ingests based on the collection and storage product
