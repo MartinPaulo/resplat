@@ -2,7 +2,8 @@ import logging
 from collections import OrderedDict
 from decimal import Decimal
 
-from storage.models import Ingest, Collection, Request, StorageProduct
+from storage.models import Ingest, Collection, Request, StorageProduct, \
+    CollectionProfile
 
 
 class RedsReportOptions:
@@ -23,6 +24,7 @@ class ColumnNames:
     TOTAL_COST = 'Total Cost'
     CUSTODIAN = 'Data Custodian'
     LINK = 'Link'
+    DESCRIPTION = 'Description'  # Can be quite a long multi-line string...
 
     @classmethod
     def index_map(cls):
@@ -35,7 +37,7 @@ class ColumnNames:
                         'FOR 3', 'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8',
                         'FOR 9', 'FOR 10', cls.APPROVED_TB, cls.AVAILABLE_TB,
                         cls.COMMITTED_TB, cls.TOTAL_COST, cls.COMPLETED,
-                        cls.CUSTODIAN, cls.LINK]
+                        cls.CUSTODIAN, cls.LINK, cls.DESCRIPTION]
         for i, name in enumerate(column_names):
             result[name] = i
         return result
@@ -215,5 +217,10 @@ def reds_123_calc(org_type):
                 [c.full_name for c in collection.get_custodians()])
             columns[i_map[ColumnNames.CUSTODIAN]] = custodians
             columns[i_map[ColumnNames.LINK]] = collection.link
+            try:
+                description = collection.collectionprofile.merit_justification
+            except CollectionProfile.DoesNotExist:
+                description = ''
+            columns[i_map[ColumnNames.DESCRIPTION]] = description
 
     return result
