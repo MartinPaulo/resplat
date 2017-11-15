@@ -111,7 +111,7 @@ class GroupDefaultLabel:
 
     So this is a callable, deconstructible class.
 
-    Callable because we a way of making the instance respond to  django
+    Callable because we have a way of making the instance respond to  django
     requesting the value.
 
     Deconstructible because we needed django migrations to be able to serialize
