@@ -96,14 +96,13 @@ def collection_status(request):
 
 @login_required
 def reds_report_uom(request):
-    report = reds_123_calc(RedsReportOptions.MELBOURNE)
-    return csv_stream(report, 'reds123_uom.csv')
+    return csv_stream(reds_123_calc(RedsReportOptions.MELBOURNE),
+                      'reds123_uom.csv')
 
 
 @login_required
 def reds_report(request):
-    report = reds_123_calc(RedsReportOptions.ALL)
-    return csv_stream(report, 'reds123_all.csv')
+    return csv_stream(reds_123_calc(RedsReportOptions.ALL), 'reds123_all.csv')
 
 
 @login_required
