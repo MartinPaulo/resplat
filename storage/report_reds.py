@@ -2,16 +2,44 @@ import logging
 from collections import OrderedDict
 from decimal import Decimal
 
-from storage.models import Ingest, Collection, Request
+from storage.models import Ingest, Collection, Request, StorageProduct
 
-# following are the column names of the output rows
-COLLECTION_NAME = 'Collection Name'
-NODE_ID = 'Node ID'
-APPROVED_TB = 'Research Data Approved (TB)'
-AVAILABLE_TB = 'Research Data Available (Ready) (TB)'
-COMMITTED_TB = 'Total Storage Allocated (Committed) (TB)'
-COMPLETED = '% ingest completed'
-TOTAL_COST = 'Total Cost'
+
+class RedsReportOptions:
+    MELBOURNE = 'Melbourne'  # only Melbourne storage products
+    ALL = 'All'  # all storage products
+
+
+class ColumnNames:
+    """
+    the column names of the output rows
+    """
+    COLLECTION_NAME = 'Collection Name'
+    NODE_ID = 'Node ID'
+    APPROVED_TB = 'Research Data Approved (TB)'
+    AVAILABLE_TB = 'Research Data Available (Ready) (TB)'
+    COMMITTED_TB = 'Total Storage Allocated (Committed) (TB)'
+    COMPLETED = '% Ingest Completed'
+    TOTAL_COST = 'Total Cost'
+    CUSTODIAN = 'Data Custodian'
+    LINK = 'Link'
+
+    @classmethod
+    def index_map(cls):
+        """
+        :return: An ordered dictionary, with the keys being the column names,
+                 and the values being the column index number
+        """
+        result = OrderedDict()
+        column_names = [cls.COLLECTION_NAME, cls.NODE_ID, 'FOR 1', 'FOR 2',
+                        'FOR 3', 'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8',
+                        'FOR 9', 'FOR 10', cls.APPROVED_TB, cls.AVAILABLE_TB,
+                        cls.COMMITTED_TB, cls.TOTAL_COST, cls.COMPLETED,
+                        cls.CUSTODIAN, cls.LINK]
+        for i, name in enumerate(column_names):
+            result[name] = i
+        return result
+
 
 MARKET_MONASH = 'Market.Monash'
 VAULT_MONASH = 'Vault.Monash'
@@ -51,23 +79,8 @@ def _latest_data_from_ingests(storage_products):
     for ingest in ingests:
         if ingest.collection.id not in result:
             result[ingest.collection.id] = OrderedDict()
-        storage_product_name = ingest.storage_product.product_name.value.strip()
+        storage_product_name = ingest.storage_product.product_name.value
         result[ingest.collection.id][storage_product_name] = ingest
-    return result
-
-
-def _column_name_index_map():
-    """
-    :return: An ordered dictionary, with the keys being the column names, and
-             the values being the column index number
-    """
-    result = OrderedDict()
-    column_names = [COLLECTION_NAME, NODE_ID, 'FOR 1', 'FOR 2', 'FOR 3',
-                    'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8', 'FOR 9',
-                    'FOR 10', APPROVED_TB, AVAILABLE_TB,
-                    COMMITTED_TB, TOTAL_COST, COMPLETED]
-    for i, name in enumerate(column_names):
-        result[name] = i
     return result
 
 
@@ -86,7 +99,7 @@ def _allocation_totals(allocations, columns, storage_products, i_map):
     for allocation in allocations:
         storage_product = allocation.storage_product
         if storage_product in storage_products:
-            storage_product_name = storage_product.product_name.value.strip()
+            storage_product_name = storage_product.product_name.value
             if storage_product_name in MELBOURNE_STORAGE:
                 raw_alloc_map[
                     storage_product_name] += allocation.size_tb / storage_product.raw_conversion_factor
@@ -102,9 +115,9 @@ def _allocation_totals(allocations, columns, storage_products, i_map):
                     1.752)
                 raw_alloc_map[MARKET_MONASH] += allocation.size_tb * Decimal(
                     1.752)
-            columns[i_map[TOTAL_COST]] += allocation.capital_cost
+            columns[i_map[ColumnNames.TOTAL_COST]] += allocation.capital_cost
     # Raw size - Total Allocation
-    columns[i_map[COMMITTED_TB]] = sum(raw_alloc_map.values())
+    columns[i_map[ColumnNames.COMMITTED_TB]] = sum(raw_alloc_map.values())
     return total_used
 
 
@@ -140,18 +153,23 @@ def _get_collection_for_codes(collection, columns, i_map):
         columns[i_map['FOR %s' % count]] = domain.field_of_research.code
 
 
-def reds_123_calc(for_storage_products):
+def reds_123_calc(org_type):
     """
     REDS == 'Research E-Data Scheme'
-    :param for_storage_products: the list of storage products to calculate for
+    :param org_type: the organisations to return the report for
     :return: a list of rows containing the calculated reds 123 values for
-             each collection that uses one of the storage products in the
-             parameter
+             each collection that belongs to the org_type
     """
     result = []
-    i_map = _column_name_index_map()
+    i_map = ColumnNames.index_map()
     # put the column names as the first row of the results being returned
     result.append(list(i_map.keys()))
+
+    if RedsReportOptions.MELBOURNE == org_type:
+        for_storage_products = StorageProduct.objects.filter(
+            product_name__value__icontains='Melbourne')
+    else:
+        for_storage_products = StorageProduct.objects.all()
 
     filtered_ingests = _latest_data_from_ingests(for_storage_products)
 
@@ -175,21 +193,27 @@ def reds_123_calc(for_storage_products):
         if status == 'Approved':
             # set all the initial column values to 0
             columns = [0] * len(i_map)
-            columns[i_map[COLLECTION_NAME]] = collection.name
-            columns[i_map[NODE_ID]] = request.code
+            columns[i_map[ColumnNames.COLLECTION_NAME]] = collection.name
+            columns[i_map[ColumnNames.NODE_ID]] = request.code
             _get_collection_for_codes(collection, columns, i_map)
-            columns[i_map[APPROVED_TB]] = collection.total_allocation
+            columns[
+                i_map[ColumnNames.APPROVED_TB]] = collection.total_allocation
             total_used = _allocation_totals(collection.allocations.all(),
                                             columns, for_storage_products,
                                             i_map)
             total_used += _non_compute_ingests_used_capacity(collection,
                                                              filtered_ingests)
-            columns[i_map[AVAILABLE_TB]] = _get_tb_from_gb(total_used)
-            if columns[i_map[APPROVED_TB]] > 0:
-                columns[i_map[COMPLETED]] = round(
-                    columns[i_map[AVAILABLE_TB]] / columns[
-                        i_map[APPROVED_TB]] * 100,
+            columns[i_map[ColumnNames.AVAILABLE_TB]] = _get_tb_from_gb(
+                total_used)
+            if columns[i_map[ColumnNames.APPROVED_TB]] > 0:
+                columns[i_map[ColumnNames.COMPLETED]] = round(
+                    columns[i_map[ColumnNames.AVAILABLE_TB]] / columns[
+                        i_map[ColumnNames.APPROVED_TB]] * 100,
                     2)
             result.append(columns)
+            custodians = ", ".join(
+                [c.full_name for c in collection.get_custodians()])
+            columns[i_map[ColumnNames.CUSTODIAN]] = custodians
+            columns[i_map[ColumnNames.LINK]] = ''
 
     return result

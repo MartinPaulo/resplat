@@ -454,7 +454,7 @@ class Collection(models.Model):
 
     def get_allocations_by_storage_product(self):
         """
-        Return a dictionary with StorageProducts as keys
+        :return:  a dictionary with StorageProducts as keys
         For each Storage Product associated with the Collection, the value is
         a tuple
             ([list of allocations specific to Storage Product],
@@ -468,6 +468,15 @@ class Collection(models.Model):
             result[allocation.storage_product] = (
                 alloc_list, size + allocation.size)
         return result
+
+    def get_custodians(self):
+        """
+        :return: a list of the custodian persons for this collection
+        """
+        # following is brittle: as role value is set in the Label table :(
+        custodians = Custodian.objects.filter(collection=self,
+                                              role__value='Data Custodian')
+        return [custodian.person for custodian in custodians]
 
 
 class Request(models.Model):

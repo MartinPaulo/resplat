@@ -13,7 +13,7 @@ from storage.report_for_code_ingest import report_for_code_ingest, \
     ForCodeReportOptions
 from storage.report_funding import FundingReportForAllCollectionsBySP
 from storage.report_ingests_over_time import get_ingests_over_time
-from storage.report_reds import reds_123_calc
+from storage.report_reds import reds_123_calc, RedsReportOptions
 from storage.report_unfunded import UnfundedReportForAllCollections
 
 logger = logging.getLogger(__name__)
@@ -96,15 +96,14 @@ def collection_status(request):
 
 @login_required
 def reds_report_uom(request):
-    uom_storage_products = StorageProduct.objects.filter(
-        product_name__value__icontains='Melbourne')
-    return csv_stream(reds_123_calc(uom_storage_products), 'reds123_uom.csv')
+    report = reds_123_calc(RedsReportOptions.MELBOURNE)
+    return csv_stream(report, 'reds123_uom.csv')
 
 
 @login_required
 def reds_report(request):
-    all_storage_products = StorageProduct.objects.all()
-    return csv_stream(reds_123_calc(all_storage_products), 'reds123_all.csv')
+    report = reds_123_calc(RedsReportOptions.ALL)
+    return csv_stream(report, 'reds123_all.csv')
 
 
 @login_required
