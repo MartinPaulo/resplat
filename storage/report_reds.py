@@ -214,6 +214,6 @@ def reds_123_calc(org_type):
             custodians = ", ".join(
                 [c.full_name for c in collection.get_custodians()])
             columns[i_map[ColumnNames.CUSTODIAN]] = custodians
-            columns[i_map[ColumnNames.LINK]] = ''
+            columns[i_map[ColumnNames.LINK]] = collection.link
 
     return result

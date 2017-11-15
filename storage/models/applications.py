@@ -401,6 +401,9 @@ class Collection(models.Model):
         verbose_name='Metadata available to sponsoring institution',
         help_text='is the collection metadata to be made available to the '
                   'sponsoring institution?')
+    link = models.URLField(
+        default='', blank=True, null=True,
+        help_text='a link to the collection')
 
     def __str__(self):
         return self.name

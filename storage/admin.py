@@ -317,6 +317,7 @@ class CollectionAdmin(admin.ModelAdmin):
     """
     fieldsets = [
         (None, {'fields': [('name', 'collective'), 'status', 'rifcs_consent',
+                           'link',
                            'overview', 'ingests_link']}),
     ]
     inlines = [CustodianInline, ApplicationInline, DomainInline,
