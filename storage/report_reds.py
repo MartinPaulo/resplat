@@ -11,36 +11,137 @@ class RedsReportOptions:
     ALL = 'All'  # all storage products
 
 
-class ColumnNames:
+class _ReportRow:
     """
-    the column names of the output rows
+    the values of a row in the report
     """
-    COLLECTION_NAME = 'Collection Name'
-    NODE_ID = 'Node ID'
-    APPROVED_TB = 'Research Data Approved (TB)'
-    AVAILABLE_TB = 'Research Data Available (Ready) (TB)'
-    COMMITTED_TB = 'Total Storage Allocated (Committed) (TB)'
-    COMPLETED = '% Ingest Completed'
-    TOTAL_COST = 'Total Cost'
-    CUSTODIAN = 'Data Custodian'
-    LINK = 'Link'
-    DESCRIPTION = 'Description'  # Can be quite a long multi-line string...
+    # Description can be quite a long multi-line string...
+    COLUMN_NAMES = ['Collection Name', 'Node ID', 'FOR 1', 'FOR 2',
+                    'FOR 3', 'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8',
+                    'FOR 9', 'FOR 10', 'Research Data Approved (TB)',
+                    'Research Data Available (Ready) (TB)',
+                    'Total Storage Allocated (Committed) (TB)', 'Total Cost',
+                    '% Ingest Completed',
+                    'Data Custodian', 'Link', 'Description']
 
-    @classmethod
-    def index_map(cls):
+    def __init__(self):
+        # following must be in the same order as the column names, as
+        # get_values(...) returns their values in the order they are declared
+        # ALSO: if you add/remove an attribute, it must have a corresponding
+        # COLUMN_NAME entry added/removed
+        self._collection_name = ''
+        self._node_id = 0
+        self._for_1 = 0
+        self._for_2 = 0
+        self._for_3 = 0
+        self._for_4 = 0
+        self._for_5 = 0
+        self._for_6 = 0
+        self._for_7 = 0
+        self._for_8 = 0
+        self._for_9 = 0
+        self._for_10 = 0
+        self._approved_tb = 0
+        self._available_tb = 0
+        self._committed_tb = 0
+        self._total_cost = 0
+        self._completed = 0
+        self._custodian = ''
+        self._link = ''
+        self._description = ''
+
+    @property
+    def collection_name(self):
+        return self._collection_name
+
+    @collection_name.setter
+    def collection_name(self, name):
+        self._collection_name = name
+
+    @property
+    def node_id(self):
+        return self._node_id
+
+    @node_id.setter
+    def node_id(self, value):
+        self._node_id = value
+
+    @property
+    def approved_tb(self):
+        return self._approved_tb
+
+    @approved_tb.setter
+    def approved_tb(self, value):
+        self._approved_tb = value
+
+    @property
+    def available_tb(self):
+        return self._available_tb
+
+    @available_tb.setter
+    def available_tb(self, value):
+        self._available_tb = value
+
+    @property
+    def total_cost(self):
+        return self._total_cost
+
+    @total_cost.setter
+    def total_cost(self, value):
+        self._total_cost = value
+
+    @property
+    def committed_tb(self):
+        return self._committed_tb
+
+    @committed_tb.setter
+    def committed_tb(self, value):
+        self._committed_tb = value
+
+    @property
+    def completed(self):
+        return self._completed
+
+    @completed.setter
+    def completed(self, value):
+        self._completed = value
+
+    @property
+    def custodian(self):
+        return self._custodian
+
+    @custodian.setter
+    def custodian(self, value):
+        self._custodian = value
+
+    @property
+    def link(self):
+        return self._link
+
+    @link.setter
+    def link(self, value):
+        self._link = value
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, value):
+        self._description = value
+
+    def set_for_code(self, code_number, value):
         """
-        :return: An ordered dictionary, with the keys being the column names,
-                 and the values being the column index number
+        :param code_number: the FOR code number to set
+        :param value: the value to set the FOR code to
         """
-        result = OrderedDict()
-        column_names = [cls.COLLECTION_NAME, cls.NODE_ID, 'FOR 1', 'FOR 2',
-                        'FOR 3', 'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8',
-                        'FOR 9', 'FOR 10', cls.APPROVED_TB, cls.AVAILABLE_TB,
-                        cls.COMMITTED_TB, cls.TOTAL_COST, cls.COMPLETED,
-                        cls.CUSTODIAN, cls.LINK, cls.DESCRIPTION]
-        for i, name in enumerate(column_names):
-            result[name] = i
-        return result
+        setattr(self, '_for_%s' % code_number, value)
+
+    def get_values(self):
+        """
+        :return: the values of the instance fields
+        """
+        return [value for value in self.__dict__.values()]
 
 
 MARKET_MONASH = 'Market.Monash'
@@ -55,7 +156,7 @@ COMPUTATIONAL_STORAGE = ['Computational.Monash.Performance',
 MELBOURNE_STORAGE = COMPUTATIONAL_STORAGE + ['Market.Melbourne',
                                              'Vault.Melbourne.Object']
 
-VALID_SCHEMES = {'Merit': 'RDSI Merit', 'ReDS3': 'RDSI Board (ReDS3)'}
+VALID_SCHEMES = ['RDSI Merit', 'RDSI Board (ReDS3)']
 
 logger = logging.getLogger(__name__)
 
@@ -86,40 +187,35 @@ def _latest_data_from_ingests(storage_products):
     return result
 
 
-def _allocation_totals(allocations, columns, storage_products, i_map):
+def _allocation_totals(allocations, rr, storage_products):
     """
     :param allocations: the allocations to be summed
-    :param columns: *mutated* the allocation sums are written into the columns
+    :param rr: *mutated* the allocation sums are written into the report row
     :param storage_products: the storage products whose allocations are to be
                              summed
-    :param i_map: a map of column names and their index values
     :return: the sum of the allocation sizes
     """
     total_used = Decimal(0.0)
-    raw_alloc_map = {sp.product_name.value: Decimal(0.0) for sp in
-                     storage_products}
+    raw_alloc = {sp.product_name.value: Decimal(0.0) for sp in
+                 storage_products}
     for allocation in allocations:
-        storage_product = allocation.storage_product
-        if storage_product in storage_products:
-            storage_product_name = storage_product.product_name.value
-            if storage_product_name in MELBOURNE_STORAGE:
-                raw_alloc_map[
-                    storage_product_name] += allocation.size_tb / storage_product.raw_conversion_factor
-                if storage_product_name in COMPUTATIONAL_STORAGE:
+        sp = allocation.storage_product
+        if sp in storage_products:
+            sp_name = sp.product_name.value
+            if sp_name in MELBOURNE_STORAGE:
+                raw_alloc[
+                    sp_name] += allocation.size_tb / sp.raw_conversion_factor
+                if sp_name in COMPUTATIONAL_STORAGE:
                     total_used += allocation.size
-            elif storage_product_name in [VAULT_MONASH]:
-                raw_alloc_map[VAULT_MONASH] += allocation.size_tb * Decimal(
-                    0.069)
-                raw_alloc_map[MARKET_MONASH] += allocation.size_tb * Decimal(
-                    2.0)
-            elif storage_product_name in [MARKET_MONASH]:
-                raw_alloc_map[VAULT_MONASH] += allocation.size_tb * Decimal(
-                    1.752)
-                raw_alloc_map[MARKET_MONASH] += allocation.size_tb * Decimal(
-                    1.752)
-            columns[i_map[ColumnNames.TOTAL_COST]] += allocation.capital_cost
+            elif sp_name in [VAULT_MONASH]:
+                raw_alloc[VAULT_MONASH] += allocation.size_tb * Decimal(0.069)
+                raw_alloc[MARKET_MONASH] += allocation.size_tb * Decimal(2.0)
+            elif sp_name in [MARKET_MONASH]:
+                raw_alloc[VAULT_MONASH] += allocation.size_tb * Decimal(1.752)
+                raw_alloc[MARKET_MONASH] += allocation.size_tb * Decimal(1.752)
+            rr.total_cost += allocation.capital_cost
     # Raw size - Total Allocation
-    columns[i_map[ColumnNames.COMMITTED_TB]] = sum(raw_alloc_map.values())
+    rr.committed_tb = sum(raw_alloc.values())
     return total_used
 
 
@@ -142,19 +238,6 @@ def _non_compute_ingests_used_capacity(collection, filtered_ingests):
     return capacity_used
 
 
-def _get_collection_for_codes(collection, columns, i_map):
-    """
-    :param collection: the source collection
-    :param columns: *mutated* the for code values are written into the columns
-    :param i_map: a map of column names and their index values
-    """
-    count = 0
-    # fetch, at most 10, domains for the collection
-    for domain in collection.domains.all()[:10]:
-        count += 1
-        columns[i_map['FOR %s' % count]] = domain.field_of_research.code
-
-
 def reds_123_calc(org_type):
     """
     REDS == 'Research E-Data Scheme'
@@ -162,22 +245,19 @@ def reds_123_calc(org_type):
     :return: a list of rows containing the calculated reds 123 values for
              each collection that belongs to the org_type
     """
-    result = []
-    i_map = ColumnNames.index_map()
-    # put the column names as the first row of the results being returned
-    result.append(list(i_map.keys()))
+    result = [_ReportRow.COLUMN_NAMES]
 
     if RedsReportOptions.MELBOURNE == org_type:
-        for_storage_products = StorageProduct.objects.filter(
+        storage_products = StorageProduct.objects.filter(
             product_name__value__icontains='Melbourne')
     else:
-        for_storage_products = StorageProduct.objects.all()
+        storage_products = StorageProduct.objects.all()
 
-    filtered_ingests = _latest_data_from_ingests(for_storage_products)
+    filtered_ingests = _latest_data_from_ingests(storage_products)
 
     for collection in Collection.objects.all().order_by('name'):
         if not collection.has_allocation_for_storage_products(
-                for_storage_products):
+                storage_products):
             continue
 
         try:
@@ -185,7 +265,7 @@ def reds_123_calc(org_type):
             if not request or not request.status:
                 continue
             status = request.status.value
-            if request.scheme.value not in VALID_SCHEMES.values():
+            if request.scheme.value not in VALID_SCHEMES:
                 continue
         except (Request.DoesNotExist, Request.MultipleObjectsReturned):
             logger.exception("Original request not found?")
@@ -194,33 +274,30 @@ def reds_123_calc(org_type):
         # we only want data for the approved applications
         if status == 'Approved':
             # set all the initial column values to 0
-            columns = [0] * len(i_map)
-            columns[i_map[ColumnNames.COLLECTION_NAME]] = collection.name
-            columns[i_map[ColumnNames.NODE_ID]] = request.code
-            _get_collection_for_codes(collection, columns, i_map)
-            columns[
-                i_map[ColumnNames.APPROVED_TB]] = collection.total_allocation
+            rr = _ReportRow()
+            rr.collection_name = collection.name
+            rr.node_id = request.code
+            count = 0
+            # fetch, at most 10, domains for the collection
+            for domain in collection.domains.all()[:10]:
+                count += 1
+                rr.set_for_code(count, domain.field_of_research.code)
+            rr.approved_tb = collection.total_allocation
             total_used = _allocation_totals(collection.allocations.all(),
-                                            columns, for_storage_products,
-                                            i_map)
+                                            rr, storage_products)
             total_used += _non_compute_ingests_used_capacity(collection,
                                                              filtered_ingests)
-            columns[i_map[ColumnNames.AVAILABLE_TB]] = _get_tb_from_gb(
-                total_used)
-            if columns[i_map[ColumnNames.APPROVED_TB]] > 0:
-                columns[i_map[ColumnNames.COMPLETED]] = round(
-                    columns[i_map[ColumnNames.AVAILABLE_TB]] / columns[
-                        i_map[ColumnNames.APPROVED_TB]] * 100,
-                    2)
-            result.append(columns)
-            custodians = ", ".join(
+            rr.available_tb = _get_tb_from_gb(total_used)
+            if rr.approved_tb > 0:
+                rr.completed = round(rr.available_tb / rr.approved_tb * 100, 2)
+            rr.custodian = ", ".join(
                 [c.full_name for c in collection.get_custodians()])
-            columns[i_map[ColumnNames.CUSTODIAN]] = custodians
-            columns[i_map[ColumnNames.LINK]] = collection.link
+            rr.link = collection.link
             try:
                 description = collection.collectionprofile.merit_justification
             except CollectionProfile.DoesNotExist:
                 description = ''
-            columns[i_map[ColumnNames.DESCRIPTION]] = description
+            rr.description = description
+            result.append(rr.get_values())
 
     return result
