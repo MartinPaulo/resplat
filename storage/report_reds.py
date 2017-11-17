@@ -1,4 +1,5 @@
 import logging
+import re
 from collections import OrderedDict
 from decimal import Decimal
 
@@ -20,8 +21,7 @@ class _ReportRow:
                     'FOR 3', 'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8',
                     'FOR 9', 'FOR 10', 'Research Data Approved (TB)',
                     'Research Data Available (Ready) (TB)',
-                    'Total Storage Allocated (Committed) (TB)', 'Total Cost',
-                    '% Ingest Completed',
+                    'Total Storage Allocated (Committed) (TB)',
                     'Data Custodian', 'Link', 'Description']
 
     def __init__(self):
@@ -44,8 +44,6 @@ class _ReportRow:
         self._approved_tb = 0
         self._available_tb = 0
         self._committed_tb = 0
-        self._total_cost = 0
-        self._completed = 0
         self._custodian = ''
         self._link = ''
         self._description = ''
@@ -83,28 +81,12 @@ class _ReportRow:
         self._available_tb = value
 
     @property
-    def total_cost(self):
-        return self._total_cost
-
-    @total_cost.setter
-    def total_cost(self, value):
-        self._total_cost = value
-
-    @property
     def committed_tb(self):
         return self._committed_tb
 
     @committed_tb.setter
     def committed_tb(self, value):
         self._committed_tb = value
-
-    @property
-    def completed(self):
-        return self._completed
-
-    @completed.setter
-    def completed(self, value):
-        self._completed = value
 
     @property
     def custodian(self):
@@ -128,7 +110,7 @@ class _ReportRow:
 
     @description.setter
     def description(self, value):
-        self._description = value
+        self._description = re.sub('\s+', ' ', value).strip()
 
     def set_for_code(self, code_number, value):
         """
@@ -213,8 +195,6 @@ def _allocation_totals(allocations, rr, storage_products):
             elif sp_name in [MARKET_MONASH]:
                 raw_alloc[VAULT_MONASH] += allocation.size_tb * Decimal(1.752)
                 raw_alloc[MARKET_MONASH] += allocation.size_tb * Decimal(1.752)
-            rr.total_cost += allocation.capital_cost
-    # Raw size - Total Allocation
     rr.committed_tb = sum(raw_alloc.values())
     return total_used
 
@@ -288,8 +268,6 @@ def reds_123_calc(org_type):
             total_used += _non_compute_ingests_used_capacity(collection,
                                                              filtered_ingests)
             rr.available_tb = _get_tb_from_gb(total_used)
-            if rr.approved_tb > 0:
-                rr.completed = round(rr.available_tb / rr.approved_tb * 100, 2)
             rr.custodian = ", ".join(
                 [c.full_name for c in collection.get_custodians()])
             rr.link = collection.link
