@@ -24,15 +24,15 @@ node {
 if (BRANCH_NAME == "master") {
 	node {
 		stage ('QA') {
-			undeploy(RESPLAT_QA_SETTINGS)
-			deploy(RESPLAT_QA_SETTINGS)
+			docker_undeploy(RESPLAT_QA_SETTINGS)
+			docker_deploy(RESPLAT_QA_SETTINGS)
 		}
 	}
 	input "Deploy to production?"
 	node {
 		stage ('Production') {
-			undeploy(RESPLAT_PROD_SETTINGS)
-			deploy(RESPLAT_PROD_SETTINGS)
+			docker_undeploy(RESPLAT_PROD_SETTINGS)
+			docker_deploy(RESPLAT_PROD_SETTINGS)
 		}
 	}
 }
