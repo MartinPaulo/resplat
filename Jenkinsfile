@@ -8,7 +8,7 @@ node {
 	stage ('Test') {
 		docker.image('resplatimg').inside('-u root') {
 			stage ('Setup tests') {
-				sh 'python --version'
+				sh 'python3 --version'
 				echo 'This is a place holder for setting up test settings if any'
 			}
 			stage ('Run tests') {
