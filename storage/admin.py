@@ -8,6 +8,8 @@ from django.db.models import TextField, Q
 from django.forms import ModelForm, TextInput, Textarea
 from django.urls import reverse
 from django.utils.html import format_html
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin
 
 from storage.filters import RelatedDropDownFilter, FieldOfResearchFilter
 from storage.models.applications import AccessLayer, AccessLayerMember
@@ -100,7 +102,12 @@ class AllocationAdmin(admin.ModelAdmin):
     search_fields = ['collection__name', 'application__code']
 
 
-class ContactAdmin(admin.ModelAdmin):
+class ContactResource(resources.ModelResource):
+    class Meta:
+        model = Contact
+
+
+class ContactAdmin(ImportExportModelAdmin):
     fieldsets = [
         (None, {'fields': ['first_name', 'last_name', 'orcid', 'organisation',
                            'title', 'position']}),
@@ -114,6 +121,7 @@ class ContactAdmin(admin.ModelAdmin):
                    ('position', RelatedDropDownFilter)]
     ordering = ['last_name', 'first_name']
     search_fields = ['first_name', 'last_name']
+    resource_class = ContactResource
 
 
 class FieldOfResearchAdmin(admin.ModelAdmin):
