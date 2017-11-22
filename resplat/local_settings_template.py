@@ -25,6 +25,9 @@ DATABASES = {
         'PASSWORD': 'some_password',
         'HOST': 'some_host',
         'PORT': '5432',
+        'TEST': {
+            'NAME': 'test_db',
+        }
     }
 }
 
