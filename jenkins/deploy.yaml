@@ -1,0 +1,136 @@
+# Juno Release
+heat_template_version: 2014-10-16
+
+
+description: 'Install ResPlat storage app on a single Ubuntu  16.06 instance. '
+
+
+parameters:
+
+  key_name:
+    type: string
+    label: Key Name
+    description: Name of an existing KeyPair to enable SSH access to the instances.
+    constraints:
+      - custom_constraint: nova.keypair
+        description: Must be an existing KeyPair
+
+  image_id:
+    type: string
+    label: Image name
+    description: Image to be used for compute instance
+    constraints:
+      - custom_constraint: glance.image
+        description: Must be a valid Ubuntu 16.04 image
+
+  instance_type:
+    type: string
+    label: Instance Type
+    description: Type of instance (flavor) to be used.
+    constraints:
+      - custom_constraint: nova.flavor
+        description: Must be a valid NeCTAR flavour
+
+  availability_zone:
+    type: string
+    label: Availability Zone
+    description: Physical location of the server.
+    default: melbourne
+    constraints:
+      - allowed_values: [ monash, melbourne, QRIScloud, NCI, intersect, pawsey, sa, tasmania ]
+        description: Value must be one of monash, melbourne, QRIScloud, NCI, intersect, pawsey, sa, tasmania.
+
+resources:
+
+    # Use this when we do not have Neutron networking.
+    # http://docs.openstack.org/developer/heat/template_guide/cfn.html#AWS::EC2::SecurityGroup
+    web_security_group:
+        type: AWS::EC2::SecurityGroup
+        properties:
+            GroupDescription: Web server access rules.
+            SecurityGroupIngress:
+                - {IpProtocol: tcp, FromPort: '22', ToPort: '22', CidrIp: 0.0.0.0/0}
+                - {IpProtocol: tcp, FromPort: '80', ToPort: '80', CidrIp: 0.0.0.0/0}
+
+    wait_condition:
+      type: OS::Heat::WaitCondition
+      properties:
+        handle: { get_resource: wait_handle }
+        count: 1
+        timeout: 600
+
+    wait_handle:
+      type: OS::Heat::WaitConditionHandle
+
+    secret_key:
+      type: OS::Heat::RandomString
+      properties:
+        length: 50
+
+    app_server:
+        type: OS::Nova::Server
+        properties:
+            key_name: { get_param: key_name }
+            image: { get_param: image_id }
+            flavor: { get_param: instance_type }
+            availability_zone: {get_param: availability_zone}
+            personality: {"/local_settings.py": {get_file: "/Users/loa1/Documents/Git/resplat/jenkins/local_settings.py"}}
+            security_groups:
+                - { get_resource: web_security_group }
+            user_data_format: RAW
+            user_data:
+              str_replace:
+                params:
+                  wc_notify: {get_attr: ['wait_handle', 'curl_cli'] }
+                  NEW_KEY: {get_attr: ['secret_key', 'value']}
+                template: |
+                  #!/bin/bash
+                  echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+                  echo "Beginning run of user_data script."
+
+                  # useful links:
+                  #   http://stackoverflow.com/questions/20913125/mod-wsgi-for-correct-version-of-python3
+                  #   https://www.digitalocean.com/community/tutorials/how-to-serve-django-applications-with-apache-and-mod_wsgi-on-ubuntu-16-04
+                  #   https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04
+
+                  # Following will stop things like grub asking if the user
+                  # wants to keep the old config file or not, which stops
+                  # the automated install dead.
+                  export DEBIAN_FRONTEND=noninteractive
+                  apt-get update
+
+                  # It appears that some ubuntu 16.04 images automatically run
+                  # unattended-upgrades on boot: so our script sometimes
+                  # clashes with it. Hence we wait if we find it running...
+                  while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+                    sleep 1
+                  done
+
+                  apt-get -y upgrade
+                  apt-get -y install git
+                  git clone https://github.com/MartinPaulo/resplat.git
+                  mv /local_settings.py /resplat/resplat/local_settings.py
+                  cd /resplat/
+                  sh jenkins/apt-get_setup.sh
+                  sh jenkins/apache_setup.sh
+
+                  # notify heat that we are done here
+                  wc_notify --data-binary '{"status": "SUCCESS"}'
+                  echo ""
+                  echo "End: run user_data bash script."
+                  echo "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+
+outputs:
+
+    instance_ip:
+        description: The IP address of the deployed instance
+        value: { get_attr: [app_server, first_address] }
+
+    website_url:
+        description: URL for the application
+        value:
+            list_join: ['', ['http://', get_attr: [app_server, first_address]]]
+
+
+
+
