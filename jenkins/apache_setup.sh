@@ -23,4 +23,4 @@ ln -s /etc/apache2/sites-available/resplat.apache2.conf /etc/apache2/sites-enabl
 
 
 #service apache2 restart
-systemctl start apache2
+systemctl restart apache2
