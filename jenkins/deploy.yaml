@@ -115,7 +115,7 @@ resources:
                   LOCAL_SETTINGS_PY
                   """ > /resplat/resplat/local_settings.py
                   cd /resplat/
-                  sh jenkins/apt-get_setup.sh
+                  sh jenkins/apt_setup.sh
                   sh jenkins/apache_setup.sh
 
                   curl localhost
