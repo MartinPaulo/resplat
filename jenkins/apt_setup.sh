@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# Installs all operating system software dependencies including apt-get and pip installs
+#
+# Arguments:
+#   None
 
 apt-get update
 apt-get upgrade
