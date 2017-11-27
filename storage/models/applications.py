@@ -179,8 +179,11 @@ class CollectionProfile(models.Model):
         help_text='the collection associated with this profile')
     #  Todo: rename merit_justification to 'description'
     merit_justification = models.TextField(
+        verbose_name='Description',
         blank=True, null=True,
+        db_column='merit_justification',
         help_text='description of what the collection is')
+    #  Todo: remove estimated_final_size
     estimated_final_size = models.DecimalField(
         max_digits=15, decimal_places=2, blank=True, null=True,
         verbose_name='estimated collection final size',
