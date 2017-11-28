@@ -24,8 +24,9 @@ node {
 if (BRANCH_NAME == "master") {
 	node {
 		stage ('QA') {
-			docker_undeploy(RESPLAT_QA_SETTINGS)
-			docker_deploy(RESPLAT_QA_SETTINGS)
+			heat_deploy(RESPLAT_QA_SETTINGS)
+			//docker_undeploy(RESPLAT_QA_SETTINGS)
+			//docker_deploy(RESPLAT_QA_SETTINGS)
 		}
 	}
 	input "Deploy to production?"
@@ -48,4 +49,7 @@ def docker_undeploy(settings) {
 	sh "docker rm `cat $settings/NAME` || true"
 }
 
+def heat_deploy(settings) {
+	sh "SCRIPT_HOME=`pwd` jenkins/OS_deploy_replace.bash $settings/deploy.params"
+}
 
