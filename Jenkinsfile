@@ -1,5 +1,6 @@
 #!groovy
 
+/*
 node {
 	stage ('Build') {
 		checkout scm
@@ -20,6 +21,7 @@ node {
 		}
 	}
 }
+*/
 
 if (BRANCH_NAME == "master") {
 	node {
