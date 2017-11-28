@@ -8,10 +8,11 @@
 set +x
 
 SCRIPT_HOME=/Users/loa1/Documents/Git/resplat/jenkins
-STACK_PREFIX=resplat
+STACK_PREFIX=resplat_auto_
 LOCAL_SETTINGS_PY_SRC=/Users/loa1/resplat_local_settings.py
 ENVIRONMENT_YAML=/Users/loa1/Documents/Git/resplat/jenkins/environment.yaml
 WAIT_CHECK_SECONDS=30
+WEB_FRONT_SSH_C="ssh ubuntu@115.146.84.124 ./change_proxy.sh "
 
 _params=($(cat <<EOF
 SCRIPT_HOME
@@ -20,8 +21,6 @@ LOCAL_SETTINGS_PY_SRC
 ENVIRONMENT_YAML
 WAIT_CHECK_SECONDS
 OS_AUTH_URL
-OS_TENANT_ID
-OS_TENANT_NAME
 OS_PROJECT_NAME
 OS_USERNAME
 OS_PASSWORD
@@ -113,9 +112,22 @@ NEW_IP=$(openstack stack output show $NEW_NAME instance_ip -c output_value -f va
 _info "$NEW_NAME IP address is $NEW_IP"
 
 # Change ip addresss (cond)
+$WEB_FRONT_SSH_C "$NEW_IP"
+if [ !$? ]; then
+	_err "Failed to update IP address on WEB_FRONT using command: $WEB_FRONT_SSH_C"
+	exit 1
+fi
+
 
 
 # Delete old stack
-openstack stack delete -y "$OLD_NAME"
+if [ "$OLD_NAME" != "" ]; then
+	_info "Deleting old stack $OLD_NAME"
+	openstack stack delete -y "$OLD_NAME"
+fi
+
+
+
+
 
 
