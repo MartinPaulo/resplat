@@ -52,6 +52,6 @@ def docker_undeploy(settings) {
 }
 
 def heat_deploy(settings) {
-	sh "SCRIPT_HOME=`pwd` bash jenkins/OS_deploy_replace.bash $settings/deploy.params"
+	sh "SCRIPT_HOME=`pwd`/jenkins bash jenkins/OS_deploy_replace.bash $settings/deploy.params"
 }
 
