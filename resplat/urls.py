@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^resplat/', admin.site.urls),
     url(r'^resplat/stats/', include('storage.urls')),
     url(r'^$', views.index, name='index'),
+    # from http://staticfiles.productiondjango.com/blog/failproof-favicons/
     url(r'^favicon.ico$', RedirectView.as_view(
         url=staticfiles_storage.url('favicon.ico'),
         permanent=False), name="favicon")
