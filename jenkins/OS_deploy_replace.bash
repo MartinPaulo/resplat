@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # OpenStack deployment via HEAT & replaces previous stack if successful
 #
