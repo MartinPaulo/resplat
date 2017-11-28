@@ -296,9 +296,8 @@ class ApplicationInline(admin.TabularInline):
 
 class CollectionProfileInline(admin.TabularInline):
     model = CollectionProfile
-    classes = ('collapse',)
     extra = 1
-    fields = ('merit_justification', 'estimated_final_size')
+    fields = ('merit_justification',)
     max_num = 0
     verbose_name_plural = 'Collection profile'
 
@@ -328,8 +327,8 @@ class CollectionAdmin(admin.ModelAdmin):
                            'link',
                            'overview', 'ingests_link']}),
     ]
-    inlines = [CustodianInline, ApplicationInline, DomainInline,
-               CollectionProfileInline, AccessLayerMemberInline]
+    inlines = [CollectionProfileInline, CustodianInline, ApplicationInline,
+               DomainInline, AccessLayerMemberInline]
     change_form_template = 'admin/collection.html'
     list_display = ('name', 'status')
     list_display_links = ('name',)
