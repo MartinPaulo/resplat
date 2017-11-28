@@ -16,4 +16,3 @@ apt-get install -y vim
 pip3 install --upgrade pip
 pip install -r requirements.txt
 python3 manage.py collectstatic --no-input
-python3 manage.py migrate
