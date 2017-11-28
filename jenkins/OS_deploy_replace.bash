@@ -99,7 +99,10 @@ while [[ 1 ]]; do
 		_info "Stack complete"
 		is_successful=1
 		break
-	#else
+	elif [ "$stack_status" = "CREATE_FAILED" ]; then
+		_err "Stack creation failed"
+		is_successful=0
+		break
 	fi
 	TIME_DIFF=$(($SECONDS - $TIME_START))
 	_info "$(($TIME_DIFF / 60)) minutes and $(($TIME_DIFF % 60)) seconds elapsed. Still waiting..."

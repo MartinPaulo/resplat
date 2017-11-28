@@ -31,6 +31,7 @@ if (BRANCH_NAME == "master") {
 			//docker_deploy(RESPLAT_QA_SETTINGS)
 		}
 	}
+/*
 	input "Deploy to production?"
 	node {
 		stage ('Production') {
@@ -38,6 +39,7 @@ if (BRANCH_NAME == "master") {
 			docker_deploy(RESPLAT_PROD_SETTINGS)
 		}
 	}
+*/
 }
 
 def docker_deploy(settings) {
