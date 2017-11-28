@@ -5,14 +5,23 @@
 # Arguments:
 #   .
 
-set +x
+set -x
 
-SCRIPT_HOME=/Users/loa1/Documents/Git/resplat/jenkins
-STACK_PREFIX=resplat_auto_
-LOCAL_SETTINGS_PY_SRC=/Users/loa1/resplat_local_settings.py
-ENVIRONMENT_YAML=/Users/loa1/Documents/Git/resplat/jenkins/environment.yaml
-WAIT_CHECK_SECONDS=30
-WEB_FRONT_SSH_C="ssh ubuntu@115.146.84.124 ./change_proxy.sh "
+# Example env vars
+#SCRIPT_HOME=/Users/loa1/Documents/Git/resplat/jenkins
+#STACK_PREFIX=resplat_auto_
+#LOCAL_SETTINGS_PY_SRC=/Users/loa1/resplat_local_settings.py
+#ENVIRONMENT_YAML=/Users/loa1/Documents/Git/resplat/jenkins/environment.yaml
+#WAIT_CHECK_SECONDS=30
+#WEB_FRONT_SSH_C="ssh ubuntu@115.146.84.124 ./change_proxy.sh "
+# ...plus openstack rc profile...
+
+# Get envvars
+if [ -z "$1" ]; then
+	echo "Usage: bash OS_deploy_replace.bash (profile)"
+fi
+. $1
+
 
 _params=($(cat <<EOF
 SCRIPT_HOME
@@ -20,6 +29,7 @@ STACK_PREFIX
 LOCAL_SETTINGS_PY_SRC
 ENVIRONMENT_YAML
 WAIT_CHECK_SECONDS
+WEB_FRONT_SSH_C
 OS_AUTH_URL
 OS_PROJECT_NAME
 OS_USERNAME
@@ -48,11 +58,6 @@ _info() {
 	echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] INFO: $@"
 }
 
-
-# Get envvars
-#if [ -z "$2" ]; then
-#	echo "Usage: bash OS_deploy_replace.bash (profile) (change ip: true|false)"
-#fi
 
 
 
@@ -105,28 +110,31 @@ done
 if [ "$is_successful" = "0" ]; then
 	_err "Stack creation unsuccessful. Previous stack untouched."
 	exit 1
-	# TODO: If this happens in succession, there will be many stacks that increment. Someone manually needs to come clean up"
 fi
 
 NEW_IP=$(openstack stack output show $NEW_NAME instance_ip -c output_value -f value)
 _info "$NEW_NAME IP address is $NEW_IP"
 
-# Change ip addresss (cond)
+# Change ip addresss, exit if errors
 $WEB_FRONT_SSH_C "$NEW_IP"
-if [ !$? ]; then
+if [ ! $? ]; then
 	_err "Failed to update IP address on WEB_FRONT using command: $WEB_FRONT_SSH_C"
 	exit 1
 fi
 
 
 
-# Delete old stack
-if [ "$OLD_NAME" != "" ]; then
-	_info "Deleting old stack $OLD_NAME"
-	openstack stack delete -y "$OLD_NAME"
-fi
+### Delete just last old stack method
+#if [ "$OLD_NAME" != "" ]; then
+#	_info "Deleting old stack $OLD_NAME"
+#	openstack stack delete -y "$OLD_NAME"
+#fi
 
-
+### Delete all old stacks method
+for stack in "${stacks[@]}"; do
+	_info "Deleting old stack $stack"
+	openstack stack delete -y "$stack"
+done
 
 
 
