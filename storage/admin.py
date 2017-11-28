@@ -1,4 +1,3 @@
-# Register your models here.
 import datetime
 import json
 import logging

@@ -132,6 +132,7 @@ except ImportError:
     logging.warning("No local_settings file found.")
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 
 LOGGING = {
     'version': 1,
@@ -154,5 +155,3 @@ LOGGING = {
         },
     },
 }
-
-
