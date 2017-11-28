@@ -5,7 +5,7 @@
 # Arguments:
 #   .
 
-set -x
+set +x
 
 # Example env vars
 #SCRIPT_HOME=/Users/loa1/Documents/Git/resplat/jenkins
