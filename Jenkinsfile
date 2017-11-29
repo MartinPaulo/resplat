@@ -3,42 +3,39 @@
 node {
 	stage ('Build') {
 		checkout scm
-		//docker.build('resplatimg')
-	}
-}
-/*
+		// Fetch a copy of the test settings to build into the container
+		cp $RESPLAT_TEST_SETTINGS/local_settings.py resplat/
+		docker.build('resplatimg')
 	}
 	stage ('Test') {
+		//docker_undeploy(RESPLAT_DEV_SETTINGS)
+		//docker_deploy(RESPLAT_DEV_SETTINGS)
 		docker.image('resplatimg').inside('-u root') {
 			stage ('Setup tests') {
-				sh 'python3 --version'
-				echo 'This is a place holder for setting up test settings if any'
+				sh 'python3 manage.py migrate'
 			}
 			stage ('Run tests') {
-				echo 'This is a place holder for running tests'
+				sh 'coverage run manage.py test --keepdb storage -v 2'
+				sh 'coverage html'
 			}
 			stage ('Archive results') {
-				echo 'This is a place holder to archive artefacts'
+				archive (includes: 'htmlcov/*')
 			}
 		}
 	}
 }
-*/
 
 if (BRANCH_NAME == "master") {
 	node {
 		stage ('QA') {
 			heat_deploy(RESPLAT_QA_SETTINGS)
-			//docker_undeploy(RESPLAT_QA_SETTINGS)
-			//docker_deploy(RESPLAT_QA_SETTINGS)
 		}
 	}
 /*
 	input "Deploy to production?"
 	node {
 		stage ('Production') {
-			docker_undeploy(RESPLAT_PROD_SETTINGS)
-			docker_deploy(RESPLAT_PROD_SETTINGS)
+			heat_deploy(RESPLAT_QA_SETTINGS)
 		}
 	}
 */
