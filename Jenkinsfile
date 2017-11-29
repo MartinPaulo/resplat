@@ -10,7 +10,7 @@ node {
 	stage ('Test') {
 		//docker_undeploy(RESPLAT_DEV_SETTINGS)
 		//docker_deploy(RESPLAT_DEV_SETTINGS)
-		docker.image('resplatimg').inside('-u root') {
+		docker.image('resplatimg').inside('-u root --link postgres:postgres') {
 			stage ('Setup tests') {
 				sh 'python3 manage.py migrate'
 			}
