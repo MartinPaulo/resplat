@@ -27,6 +27,7 @@ _params=($(cat <<EOF
 SCRIPT_HOME
 STACK_PREFIX
 LOCAL_SETTINGS_PY_SRC
+EXTRA_SSH_KEYS
 ENVIRONMENT_YAML
 WAIT_CHECK_SECONDS
 WEB_FRONT_SSH_C
@@ -87,9 +88,17 @@ fi
 _info "New stack name will be: $NEW_NAME"
 
 # HEAT
+
+# Copy local files to relative folder for deploy.yaml
 cp "$LOCAL_SETTINGS_PY_SRC" "$SCRIPT_HOME/local_settings.py"
+cp "$EXTRA_SSH_KEYS" "$SCRIPT_HOME/extra_ssh_keys.pub"
 TIME_START=$SECONDS
+
 openstack stack create -t "$SCRIPT_HOME/deploy.yaml" -e "$ENVIRONMENT_YAML" "$NEW_NAME"
+
+# Clean up copied files
+rm "$SCRIPT_HOME/local_settings.py"
+rm "$SCRIPT_HOME/extra_ssh_keys.pub"
 
 # Wait for HEAT complete
 is_successful=0

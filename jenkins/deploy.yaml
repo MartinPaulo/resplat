@@ -91,6 +91,7 @@ resources:
                   wc_notify: {get_attr: ['wait_handle', 'curl_cli'] }
                   NEW_KEY: {get_attr: ['secret_key', 'value']}
                   LOCAL_SETTINGS_PY: { get_file: "local_settings.py" }
+                  EXTRA_SSH_KEYS: { get_file: "extra_ssh_keys.pub" }
                 template: |
                   #!/bin/bash
                   echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -107,6 +108,11 @@ resources:
                   export DEBIAN_FRONTEND=noninteractive
                   apt-get update
 
+                  # Add extra ssh keys 
+                  echo """
+                  EXTRA_SSH_KEYS
+                  """ >> ~ubuntu/.ssh/authorized_keys
+
                   # It appears that some ubuntu 16.04 images automatically run
                   # unattended-upgrades on boot: so our script sometimes
                   # clashes with it. Hence we wait if we find it running...
@@ -117,6 +123,7 @@ resources:
                   apt-get -y upgrade
                   apt-get -y install git
                   git clone https://github.com/MartinPaulo/resplat.git
+
                   # Inject the local_settings.py with all the connection details
                   echo """
                   LOCAL_SETTINGS_PY
@@ -128,7 +135,7 @@ resources:
                   python3 manage.py migrate
 
                   # Start apache and do basic test
-                  systemctl start apache2
+                  systemctl restart apache2
                   curl localhost
 
                   # notify heat that we are done here
