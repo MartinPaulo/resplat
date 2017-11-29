@@ -42,8 +42,8 @@ parameters:
 
   web_front_sec_id:
     type: string
-    label: Security Group ID for port 80
-    description: Security group id that limits who can access port 80 in this server. For example IP address for web front server
+    label: Security Group ID for Web front server
+    description: Limit port 80 access to Web front server only that is already made. For example 115.146.92.124/32, port 80
 
 
 

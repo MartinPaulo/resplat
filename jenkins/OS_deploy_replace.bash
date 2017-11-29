@@ -95,6 +95,10 @@ cp "$EXTRA_SSH_KEYS" "$SCRIPT_HOME/extra_ssh_keys.pub"
 TIME_START=$SECONDS
 
 openstack stack create -t "$SCRIPT_HOME/deploy.yaml" -e "$ENVIRONMENT_YAML" "$NEW_NAME"
+if [ ! $? ]; then
+	_err "openstack stack create command failed. Exiting"
+	exit 1
+fi
 
 # Clean up copied files
 rm "$SCRIPT_HOME/local_settings.py"
