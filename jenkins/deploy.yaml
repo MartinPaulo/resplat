@@ -40,6 +40,13 @@ parameters:
       - allowed_values: [ monash, melbourne, QRIScloud, NCI, intersect, pawsey, sa, tasmania ]
         description: Value must be one of monash, melbourne, QRIScloud, NCI, intersect, pawsey, sa, tasmania.
 
+  web_front_sec_id:
+    type: string
+    label: Security Group ID for port 80
+    description: Security group id that limits who can access port 80 in this server. For example IP address for web front server
+
+
+
 resources:
 
     # Use this when we do not have Neutron networking.
@@ -50,7 +57,6 @@ resources:
             GroupDescription: Web server access rules.
             SecurityGroupIngress:
                 - {IpProtocol: tcp, FromPort: '22', ToPort: '22', CidrIp: 0.0.0.0/0}
-                - {IpProtocol: tcp, FromPort: '80', ToPort: '80', CidrIp: 0.0.0.0/0}
 
     wait_condition:
       type: OS::Heat::WaitCondition
@@ -77,6 +83,7 @@ resources:
             availability_zone: {get_param: availability_zone}
             security_groups:
                 - { get_resource: web_security_group }
+                - { get_param: web_front_sec_id }
             user_data_format: RAW
             user_data:
               str_replace:
@@ -115,9 +122,13 @@ resources:
                   LOCAL_SETTINGS_PY
                   """ > /resplat/resplat/local_settings.py
                   cd /resplat/
-                  sh jenkins/apt_setup.sh
-                  sh jenkins/apache_setup.sh
+                  sh jenkins/setup.sh
 
+                  # Execute migrate on database to apply any db changes since code update
+                  python3 manage.py migrate
+
+                  # Start apache and do basic test
+                  systemctl start apache2
                   curl localhost
 
                   # notify heat that we are done here

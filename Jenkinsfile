@@ -43,7 +43,7 @@ if (BRANCH_NAME == "master") {
 }
 
 def docker_deploy(settings) {
-	sh "docker run -d -it -p `cat $settings/PORT`:443 --name=`cat $settings/NAME` --link postgres:postgres resplatimg"
+	sh "docker run -d -it -p `cat $settings/PORT`:80 --name=`cat $settings/NAME` --link postgres:postgres resplatimg"
 	sh "docker cp $settings/local_settings.py `cat $settings/NAME`:/resplat/resplat/local_settings.py"
 	sh "docker exec `cat $settings/NAME` service apache2 start"
 }

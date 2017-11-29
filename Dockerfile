@@ -5,8 +5,8 @@ WORKDIR /resplat
 ADD . /resplat
 
 
-RUN sh jenkins/apt_setup.sh
-RUN sh jenkins/apache_setup.sh
+RUN sh jenkins/setup.sh
 
-EXPOSE 443
-CMD ["python3"]
+EXPOSE 80
+ENTRYPOINT service apache2 start && python3
+
