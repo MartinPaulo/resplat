@@ -1,10 +1,12 @@
 #!groovy
 
-/*
 node {
 	stage ('Build') {
 		checkout scm
 		docker.build('resplatimg')
+	}
+}
+/*
 	}
 	stage ('Test') {
 		docker.image('resplatimg').inside('-u root') {
@@ -54,6 +56,10 @@ def docker_undeploy(settings) {
 }
 
 def heat_deploy(settings) {
-	sh "SCRIPT_HOME=`pwd`/jenkins bash jenkins/OS_deploy_replace.bash $settings/deploy.params"
+	timeout(time: 45, unit: 'SECONDS') {
+		sh "SCRIPT_HOME=`pwd`/jenkins bash jenkins/OS_deploy_replace.bash $settings/deploy.params"
+	}
 }
+
+
 
