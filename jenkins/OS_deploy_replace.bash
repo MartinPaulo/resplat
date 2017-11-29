@@ -95,7 +95,7 @@ cp "$EXTRA_SSH_KEYS" "$SCRIPT_HOME/extra_ssh_keys.pub"
 TIME_START=$SECONDS
 
 openstack stack create -t "$SCRIPT_HOME/deploy.yaml" -e "$ENVIRONMENT_YAML" "$NEW_NAME"
-if [ ! $? ]; then
+if [ "$?" -ne 0 ]; then
 	_err "openstack stack create command failed. Exiting"
 	exit 1
 fi
@@ -133,7 +133,7 @@ _info "$NEW_NAME IP address is $NEW_IP"
 
 # Change ip addresss, exit if errors
 $WEB_FRONT_SSH_C "$NEW_IP"
-if [ ! $? ]; then
+if [ "$?" -ne 0 ]; then
 	_err "Failed to update IP address on WEB_FRONT using command: $WEB_FRONT_SSH_C"
 	exit 1
 fi

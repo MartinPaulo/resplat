@@ -134,9 +134,15 @@ resources:
                   # Execute migrate on database to apply any db changes since code update
                   python3 manage.py migrate
 
-                  # Start apache and do basic test
+                  # Start apache 
                   systemctl restart apache2
-                  curl localhost
+
+                  # Do basic test
+                  curl -is localhost | grep "200 OK"
+                  if [ "$?" -ne 0 ]; then
+                    wc_notify --data-binary '{"status": "FAILURE"}'
+                    exit
+                  fi
 
                   # notify heat that we are done here
                   wc_notify --data-binary '{"status": "SUCCESS"}'
