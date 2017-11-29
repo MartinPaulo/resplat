@@ -4,7 +4,7 @@ node {
 	stage ('Build') {
 		checkout scm
 		// Fetch a copy of the test settings to build into the container
-		cp $RESPLAT_TEST_SETTINGS/local_settings.py resplat/
+		sh "cp $RESPLAT_TEST_SETTINGS/local_settings.py resplat/local_settings.py"
 		docker.build('resplatimg')
 	}
 	stage ('Test') {
