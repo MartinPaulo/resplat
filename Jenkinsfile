@@ -3,7 +3,7 @@
 node {
 	stage ('Build') {
 		checkout scm
-		docker.build('resplatimg')
+		//docker.build('resplatimg')
 	}
 }
 /*
@@ -56,7 +56,7 @@ def docker_undeploy(settings) {
 }
 
 def heat_deploy(settings) {
-	timeout(time: 45, unit: 'SECONDS') {
+	timeout(time: 600, unit: 'SECONDS') {
 		sh "SCRIPT_HOME=`pwd`/jenkins bash jenkins/OS_deploy_replace.bash $settings/deploy.params"
 	}
 }
