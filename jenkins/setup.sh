@@ -1,9 +1,12 @@
 #!/bin/bash
 #
 # Installs all operating system software dependencies including apt-get and pip installs
+# Setup apache2 on this server for just this application
 #
 # Arguments:
 #   None
+
+set -x
 
 apt-get update
 apt-get upgrade
@@ -16,3 +19,8 @@ apt-get install -y vim
 pip3 install --upgrade pip
 pip install -r requirements.txt
 python3 manage.py collectstatic --no-input
+
+cp jenkins/resplat.apache2.conf /etc/apache2/sites-available/
+rm /etc/apache2/sites-enabled/000-default.conf
+ln -s /etc/apache2/sites-available/resplat.apache2.conf /etc/apache2/sites-enabled/resplat.apache2.conf
+

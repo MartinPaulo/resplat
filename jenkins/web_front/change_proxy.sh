@@ -29,5 +29,5 @@ if ! valid_ip $1; then
 	exit 1
 fi
 
-echo "proxy_pass http://$1;" | sudo tee /etc/nginx/proxy_pass/resplat.conf
+echo "proxy_pass http://$1;" | sudo tee /etc/nginx/proxy_pass/root_pass.conf
 sudo nginx -s reload

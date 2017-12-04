@@ -2,7 +2,7 @@
 heat_template_version: 2014-10-16
 
 
-description: 'Install ResPlat storage app on a single Ubuntu  16.06 instance. '
+description: 'Install a webfront server for blue-green deployments'
 
 
 parameters:
@@ -40,12 +40,17 @@ parameters:
       - allowed_values: [ monash, melbourne, QRIScloud, NCI, intersect, pawsey, sa, tasmania ]
         description: Value must be one of monash, melbourne, QRIScloud, NCI, intersect, pawsey, sa, tasmania.
 
-  web_front_sec_id:
-    type: string
-    label: Security Group ID for Web front server
-    description: Limit port 80 access to Web front server only that is already made. For example 115.146.92.124/32, port 80
+  dhparam_size:
+    type: number
+    label: Dhparam key size.
+    description: Size of dhparam key in bytes. USE at least 2048 for production. Default for testing only.
+    default: 1024
 
-
+  is_self_signed:
+    type: boolean
+    label: Is self-signed
+    description: Make self-signed cert so it can be a test server
+    default: true
 
 resources:
 
@@ -57,6 +62,8 @@ resources:
             GroupDescription: Web server access rules.
             SecurityGroupIngress:
                 - {IpProtocol: tcp, FromPort: '22', ToPort: '22', CidrIp: 0.0.0.0/0}
+                - {IpProtocol: tcp, FromPort: '80', ToPort: '80', CidrIp: 0.0.0.0/0}
+                - {IpProtocol: tcp, FromPort: '443', ToPort: '443', CidrIp: 0.0.0.0/0}
 
     wait_condition:
       type: OS::Heat::WaitCondition
@@ -68,50 +75,29 @@ resources:
     wait_handle:
       type: OS::Heat::WaitConditionHandle
 
-    secret_key:
-      type: OS::Heat::RandomString
-      properties:
-        length: 50
-
-
-    app_server:
+    web_server:
         type: OS::Nova::Server
         properties:
             key_name: { get_param: key_name }
             image: { get_param: image_id }
             flavor: { get_param: instance_type }
-            availability_zone: {get_param: availability_zone}
+            availability_zone: { get_param: availability_zone }
             security_groups:
                 - { get_resource: web_security_group }
-                - { get_param: web_front_sec_id }
             user_data_format: RAW
             user_data:
               str_replace:
                 params:
                   wc_notify: {get_attr: ['wait_handle', 'curl_cli'] }
-                  NEW_KEY: {get_attr: ['secret_key', 'value']}
-                  LOCAL_SETTINGS_PY: { get_file: "local_settings.py" }
-                  EXTRA_SSH_KEYS: { get_file: "extra_ssh_keys.pub" }
+                  dhparam_size: { get_param: dhparam_size }
+                  is_self_signed: { get_param: is_self_signed }
                 template: |
                   #!/bin/bash
                   echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                   echo "Beginning run of user_data script."
 
-                  # useful links:
-                  #   http://stackoverflow.com/questions/20913125/mod-wsgi-for-correct-version-of-python3
-                  #   https://www.digitalocean.com/community/tutorials/how-to-serve-django-applications-with-apache-and-mod_wsgi-on-ubuntu-16-04
-                  #   https://www.digitalocean.com/community/tutorials/how-to-use-postgresql-with-your-django-application-on-ubuntu-14-04
-
-                  # Following will stop things like grub asking if the user
-                  # wants to keep the old config file or not, which stops
-                  # the automated install dead.
                   export DEBIAN_FRONTEND=noninteractive
                   apt-get update
-
-                  # Add extra ssh keys 
-                  echo """
-                  EXTRA_SSH_KEYS
-                  """ >> ~ubuntu/.ssh/authorized_keys
 
                   # It appears that some ubuntu 16.04 images automatically run
                   # unattended-upgrades on boot: so our script sometimes
@@ -121,27 +107,33 @@ resources:
                   done
 
                   apt-get -y upgrade
-                  apt-get -y install git
-                  git clone https://github.com/MartinPaulo/resplat.git
+                  apt-get -y install vim curl nginx
 
-                  # Inject the local_settings.py with all the connection details
-                  echo """
-                  LOCAL_SETTINGS_PY
-                  """ > /resplat/resplat/local_settings.py
-                  cd /resplat/
-                  sh jenkins/setup.sh
+                  curl https://raw.githubusercontent.com/MartinPaulo/resplat/master/jenkins/web_front/change_proxy.sh > ~ubuntu/change_proxy.sh
+                  curl https://raw.githubusercontent.com/MartinPaulo/resplat/master/jenkins/web_front/nginx_default_website > /etc/nginx/sites-available/default
 
-                  # Execute migrate on database to apply any db changes since code update
-                  python3 manage.py migrate
+                  openssl dhparam -out /etc/ssl/certs/dhparam.pem dhparam_size
+                  mkdir /etc/nginx/proxy_pass
 
-                  # Start apache 
-                  systemctl restart apache2
+                  echo is_self_signed
+                  echo "====="
 
-                  # Do basic test
-                  curl -is localhost | grep "200 OK"
-                  if [ "$?" -ne 0 ]; then
-                    wc_notify --data-binary '{"status": "FAILURE"}'
-                    exit
+
+                  if [ "is_self_signed" = "True" ]; then
+                    subj="/C=AU/ST=Victoria/O=UoM/localityName=Melbourne/commonName=/organizationalUnitName=/emailAddress=/"
+                    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -subj "$subj" -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt
+                    sed -i -e 's/ssl_certificate .*$/ssl_certificate \/etc\/ssl\/certs\/nginx-selfsigned.crt;/' /etc/nginx/sites-available/default
+                    sed -i -e 's/ssl_certificate_key .*$/ssl_certificate_key \/etc\/ssl\/private\/nginx-selfsigned.key;/' /etc/nginx/sites-available/default
+                    sed -i -e 's/ssl_trusted_certificate /#ssl_trusted_certificate /' /etc/nginx/sites-available/default
+                    # Make a basic service to proxy pass
+                    cd /var/www/html
+                    nohup python -m SimpleHTTPServer &
+                    echo "proxy_pass http://localhost:8000;" > /etc/nginx/proxy_pass/root_pass.conf
+
+                    systemctl restart nginx
+                  else
+                    # This instance is not designed to start automatically since you still have to copy over the certificates
+                    systemctl stop nginx
                   fi
 
                   # notify heat that we are done here
@@ -154,12 +146,12 @@ outputs:
 
     instance_ip:
         description: The IP address of the deployed instance
-        value: { get_attr: [app_server, first_address] }
+        value: { get_attr: [web_server, first_address] }
 
     website_url:
         description: URL for the application
         value:
-            list_join: ['', ['http://', get_attr: [app_server, first_address]]]
+            list_join: ['', ['http://', get_attr: [web_server, first_address]]]
 
 
 
