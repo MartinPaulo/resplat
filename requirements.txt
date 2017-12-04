@@ -1,5 +1,5 @@
 # the requirements to run the system in production
-django
+django==1.11.7,<2.0
 psycopg2    # http://initd.org/psycopg/docs/install.html ?
 docutils    # for admin docs
 django-import-export
