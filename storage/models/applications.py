@@ -458,6 +458,40 @@ class Collection(models.Model):
         """ :return: the amount of the total allocation for each FOR code """
         return round(float(self.total_allocation) * float(self.for_split), 2)
 
+    @property
+    def total_ingested(self):
+        "Returns the total ingested for the collection"
+        try:
+            last_extract_date = self.ingests.latest(
+                'extraction_date').extraction_date
+            result = self.ingests.filter(
+                extraction_date=last_extract_date).aggregate(
+                Sum('used_capacity'))
+        except Ingest.DoesNotExist:
+            return 0
+        amount = result['used_capacity__sum']
+        if amount:
+            return amount / 1000
+        return 0
+
+    @property
+    def percent_ingested(self):
+        """Returns how much of the allocation has been ingested as a percentage
+        of the total allocation"""
+        if self.total_ingested == 0:
+            return 0.0
+        if self.total_allocation == 0:
+            return 0.0
+        return round(
+            (float(self.total_ingested) / float(self.total_allocation)), 4)
+
+    def progress_(self):
+        return "<div style='width: 200px; border: 1px solid #ccc;'>" + \
+               "<div style='height: 10px; width: %dpx; background: #555; '>" \
+               "</div></div>" % (self.percent_ingested * 200)
+
+    progress_.allow_tags = True
+
     def get_allocations_by_storage_product(self):
         """
         :return:  a dictionary with StorageProducts as keys

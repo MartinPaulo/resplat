@@ -2,16 +2,19 @@ import logging
 from datetime import datetime, timedelta
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.shortcuts import render, get_object_or_404
 
 from storage.csv_streamer import csv_stream
-from storage.models import Ingest, StorageProduct, Collection
+from storage.models import Ingest, StorageProduct, Collection, \
+    CollectionProfile, Allocation, Request, Contact
 from storage.report_demographics import demographics_report
 from storage.report_diff_reported_and_approved import \
     get_difference_between_approved_and_reported
 from storage.report_for_code_ingest import report_for_code_ingest, \
     ForCodeReportOptions
-from storage.report_funding import FundingReportForAllCollectionsBySP
+from storage.report_funding import FundingReportForAllCollectionsBySP, \
+    FundingReportForCollection
 from storage.report_ingests_over_time import get_ingests_over_time
 from storage.report_reds import reds_123_calc, RedsReportOptions
 from storage.report_unfunded import UnfundedReportForAllCollections
@@ -92,6 +95,73 @@ def collection_status(request):
     report_list = _fetch_collection_status_data()
     context = {'report_list': report_list}
     return render(request, 'collection_status.html', context)
+
+
+@login_required
+def collection_detail(request, collection_id):
+    collection = get_object_or_404(Collection, pk=collection_id)
+    try:
+        collection_profile = CollectionProfile.objects.get(
+            collection=collection_id)
+    except CollectionProfile.DoesNotExist:
+        collection_profile = None
+    allocations = Allocation.objects.order_by().filter(
+        collection=collection_id).values(
+        'application__code',
+        'application__institution__name__value',
+        'application__scheme__value',
+        'application__status__value').distinct()
+    funding_report = FundingReportForCollection(collection)
+
+    context = {'collection': collection,
+               'collection_profile': collection_profile,
+               'allocations': allocations,
+               'funding': {
+                   'report': funding_report.report,
+                   'type': funding_report.reportType,
+                   'metric': {'text': funding_report.METRIC_GB,
+                              'factor': funding_report.get_conversion_factor(
+                                  funding_report.METRIC_GB)}
+               }
+               }
+    return render(request, 'collection_detail.html', context=context)
+
+
+@login_required
+def collection_index(request):
+    paginator = Paginator(Collection.objects.all().order_by('name'), 25,
+                          orphans=4)
+    page = request.GET.get('page', 1)
+    try:
+        collections = paginator.page(page)
+    except PageNotAnInteger:  # If page is not an integer, deliver first page
+        collections = paginator.page(1)
+    except EmptyPage:  # If page is out of range, deliver last page
+        collections = paginator.page(paginator.num_pages)
+    context = {'latest_collection_list': collections}
+    return render(request, 'collection_index.html', context)
+
+
+@login_required
+def application_detail(request, application_code):
+    application = get_object_or_404(Request, code=application_code)
+    allocations = Allocation.objects.all().filter(
+        application__code=application_code)
+
+    return render(request, 'application_detail.html',
+                  {'application': application, 'allocations': allocations})
+
+
+@login_required
+def contact_detail(request, contact_id):
+    collections = []
+    contact = get_object_or_404(Contact, pk=contact_id)
+    for collection in Collection.objects.filter(
+            custodians__person=contact).all():
+        if collection not in collections:
+            collections.append(collection)
+    return render(request, 'contact_detail.html',
+                  {'contact': contact, 'collections': collections})
 
 
 @login_required

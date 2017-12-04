@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admindocs',
+    'django.contrib.humanize',
     'import_export',
     'storage.apps.StorageConfig',
     'storage.templatetags',

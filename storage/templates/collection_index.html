@@ -1,0 +1,54 @@
+{% extends "appl_base.html" %}
+
+{% block title %}Collections List{% endblock %}
+
+{% block content %}
+    <h1>Index of Collections</h1>
+
+    {% if latest_collection_list %}
+        <table border="0" cellspacing="3" cellpadding="3" width="90%">
+            <tr>
+                <td width="10%"><b>Code</b></td>
+                <td width="10%"><b>Status</b></td>
+                <td width="25%"><b>Ingest Progress</b></td>
+                <td width="50%"><b>Collection Name</b></td>
+                <td width="5%"><b>Id</b></td>
+            </tr>
+            {% for collection in latest_collection_list %}
+                <tr>
+                    <td>
+                        {% if collection.allocations.first.application.code %}
+                            <a href="{% url 'application_detail' collection.allocations.first.application.code %}">{{ collection.allocations.first.application.code }}</a>
+                        {% else %}
+
+                        {% endif %}
+                    </td>
+                    <td>{{ collection.status }}</td>
+                    <td>
+                        {% if collection.percent_ingested > 1.0 %}
+                            <font color='red'>Allocation Exceeded</font>
+                        {% else %}
+                            {{ collection.progress_|safe }}
+                        {% endif %}</td>
+                    <td>
+                        <a href="{% url 'detail' collection.id %}">{{ collection.name }}</a>
+                    </td>
+                    <td align=center>{{ collection.id }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <div class="pagination">
+             <span class="step-links">
+             {% if latest_collection_list.has_previous %}
+                 <a href="?page={{ latest_collection_list.previous_page_number }}">previous</a>
+             {% endif %}
+                <span class="current">Page {{ latest_collection_list.number }} of {{ latest_collection_list.paginator.num_pages }}.</span>
+                {% if latest_collection_list.has_next %}
+                    <a href="?page={{ latest_collection_list.next_page_number }}">next</a>
+                {% endif %}
+             </span>
+        </div>
+    {% else %}
+        <p>No collections are available.</p>
+    {% endif %}
+{% endblock content %}

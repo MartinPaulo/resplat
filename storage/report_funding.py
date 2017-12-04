@@ -36,12 +36,32 @@ class FundingReportRow(ReportRow):
         self.data = None
 
     def is_unfunded(self):
-        return (self.scheme == self.UNFUNDED_KEY[1]) or (
-            self.storage_product == self.UNFUNDED_KEY[1])
+        """
+        :return: True if this row is unfunded, False otherwise
+        """
+        return self._is_equal(self.scheme, self.storage_product,
+                              self.UNFUNDED_KEY[1])
 
     def is_total(self):
-        return (self.scheme == self.TOTAL_KEY[1]) or (
-            self.storage_product == self.TOTAL_KEY[1])
+        """
+        :return: True if this row is a total, False otherwise
+        """
+        return self._is_equal(self.scheme, self.storage_product,
+                              self.TOTAL_KEY[1])
+
+    def _is_equal(self, a, b, target):
+        """
+        :param a: A string
+        :param b: A string
+        :param target: The string target to be compared to
+        :return: if both a and b are set, and either one is the same as the
+                 target, then return True, otherwise return False
+        """
+        if not a or not b:
+            return False
+        # casefold has been in python since 3.3
+        return (a.casefold() == target.casefold()) or (
+            b.casefold() == target.casefold())
 
 
 class FundingReportRowTuple:

@@ -1,0 +1,174 @@
+{% extends "appl_base.html" %}
+
+
+{% block extrastyle %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'storage/app.css' %}"/>
+{% endblock %}
+
+{% load storage_extras %}
+
+{% block title %}Collection Details{% endblock %}
+
+{% block branding %}
+    <h1>Collection Details</h1>
+{% endblock branding %}
+
+{% block content %}
+    <h1>Collection: {{ collection.name }}{% if collection.status %} -
+        <b>{{ collection.status }}</b>{% endif %}</h1>
+
+    <table border="0" cellspacing="3" cellpadding="3" width="80%">
+        <tr>
+            <td width="15%">Total Allocation:</td>
+            <td width="10%">{{ collection.total_allocation }}</td>
+            <td width="15%">Total Ingested:</td>
+            <td width="10%">{{ collection.total_ingested }}</td>
+            <td width="15%">Percent Ingested:</td>
+            <td width="10%">{{ collection.percent_ingested|multiply:100|floatformat }}%</td>
+            <td width="25%">{{ collection.progress_|safe }}</td>
+        </tr>
+    </table>
+
+    <h2>Applications:</h2>
+
+    {% if allocations %}
+        <ul>
+            {% for allocation in allocations %}
+                <li>
+                    <a href="{% url 'application_detail' allocation.application__code %}">{{ allocation.application__code }}</a>
+                    - {{ allocation.application__institution__name__value }} -
+                    Scheme: {{ allocation.application__scheme__value }} -
+                    Status: {{ allocation.application__status__value }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No application details are available.</p>
+    {% endif %}
+
+    <h2>Collection Details:</h2>
+
+    <table border="0" cellspacing="3" cellpadding="3" width="80%">
+        <tr>
+            <td width="25%">Overview:</td>
+            <td width="75%">{{ collection.overview }}</td>
+        </tr>
+        <tr>
+            <td>Collective:</td>
+            <td>{{ collection.collective }}</td>
+        </tr>
+        <tr>
+            <td>Primary Data Source:</td>
+            <td>{{ collection.primary_data_source }}</td>
+        </tr>
+        <tr>
+            <td><b>Profile</b></td>
+            <td>{% if not collection_profile %}
+                <b>No profile details entered</b>{% endif %}</td>
+        </tr>
+        <tr>
+            <td>Merit Justification:</td>
+            <td>{{ collection_profile.merit_justification }}</td>
+        </tr>
+        <tr>
+            <td><b>Use</b></td>
+            <td>{% if not collection_use %}
+                <b>No usage details entered</b>{% endif %}</td>
+        </tr>
+        <tr>
+            <td>Licences Needed:</td>
+            <td>{{ collection_use.licences_needed }}</td>
+        </tr>
+        <tr>
+            <td>Data Access Model:</td>
+            <td>{{ collection_use.data_access_model }}</td>
+        </tr>
+        <tr>
+            <td>Long Term Responsible Party:</td>
+            <td>{{ collection_use.long_term_rsponsible_party }}</td>
+        </tr>
+    </table>
+
+    <h2>Custodians:</h2>
+
+    {% if collection.custodians.all %}
+        <ul>
+            {% for custodian in collection.custodians.all %}
+                <li>
+                    <a href="{% url 'contact_detail' custodian.person.id %}">{{ custodian.person.full_name }}</a>
+                    - {{ custodian.role }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p><font color='red'><b>No custodian details are available.</b></font>
+        </p>
+    {% endif %}
+
+    <h2>Fields of Research:</h2>
+    {% if collection.domains.all %}
+        <p>Number of FOR Codes: {{ collection.for_count }} - FOR
+           Split: {{ collection.for_split }} - Total
+           Allocations: {{ collection.total_allocation }} - FOR Allocation
+           Split: {{ collection.for_amount }} </p>
+
+        <table border="0" cellspacing="3" cellpadding="3" width="80%">
+            <tr>
+                <td width="15"><b>Code</b></td>
+                <td width="70%"><b>Description</b></td>
+                <td width="15%" align="right">
+                    <b>Percentage Split in decimal</b></td>
+            </tr>
+            {% for domain in collection.domains.all %}
+                <tr>
+                    <td>{{ domain.field_of_research.code }}</td>
+                    <td>{{ domain.field_of_research.description }}</td>
+                    <td align="right">{{ domain.split|floatformat:4 }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No field of research details are available.</p>
+    {% endif %}
+
+    <h2>Allocations: </h2>
+    {% if collection.allocations.all %}
+        <table border="0" cellspacing="3" cellpadding="3" width="80%">
+            <tr>
+                <td width="30%"><b>Product Name</b></td>
+                <td width="10%" align="right"><b>Allocation Size (TB)</b></td>
+                <td width="20%"><b>Allocation Status</b></td>
+                <td width="20%" align="right"><b>Capital Cost</b></td>
+                <td width="20%" align="right"><b>Operational Cost</b></td>
+            </tr>
+            {% for allocation in collection.allocations.all %}
+                <tr>
+                    <td>{{ allocation.storage_product }}</td>
+                    <td align="right">{{ allocation.size_tb }}</td>
+                    <td>{{ allocation.status }}</td>
+                    <td align="right">{{ allocation.capital_cost|floatformat:2 }}</td>
+                    <td align="right">{{ allocation.operational_cost|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No allocation details are available.</p>
+    {% endif %}
+
+    <h2>Funding statistics: </h2>
+    {% include "funding_subtemplate.html" %}
+
+    <h2>Ingest records: </h2>
+    {% if collection.ingests.all %}
+        {% url 'admin:storage_ingest_changelist' as ingest_url %}
+        <a href="{{ ingest_url }}?collection__id__exact={{ collection.id }}">
+            {{ collection.ingests.count }} for this collection
+        </a>
+    {% else %}
+        <p>No ingest records are available.</p>
+    {% endif %}
+
+{% endblock content %}
+

@@ -4,7 +4,8 @@ from storage.views import ingests_for_week, collection_status, reds_report, \
     reds_report_uom, vicnode_funding_by_storage_product, \
     difference_between_reported_and_approved, ingests_over_time, \
     demographics_stream, unfunded_report, for_code_ingest_uom, \
-    for_code_ingest_all
+    for_code_ingest_all, collection_detail, application_detail, contact_detail, \
+    collection_index
 
 urlpatterns = [
     url(r'^report/$', ingests_for_week),
@@ -22,4 +23,12 @@ urlpatterns = [
     url(r'^vicnode_unfunded/$', unfunded_report),
     url(r'^for_code_ingest_uom/$', for_code_ingest_uom),
     url(r'^for_code_ingest_all/$', for_code_ingest_all),
+    url(r'^collections/$', collection_index, name='index'),
+    url(r'^collection/(?P<collection_id>\d+)/$', collection_detail,
+        name='detail'),
+    url(r'^application/(?P<application_code>[a-zA-Z0-9_.-]+)$',
+        application_detail, name='application_detail'),
+    url(r'^contact/(?P<contact_id>\d+)/$', contact_detail,
+        name='contact_detail'),
+
 ]

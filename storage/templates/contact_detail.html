@@ -1,0 +1,97 @@
+{% extends "appl_base.html" %}
+
+{% block title %}contact Details{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'storage/app.css' %}"/>
+{% endblock %}
+
+{% block content %}
+
+    <h1>Contact Details</h1>
+
+    <table border="0" cellspacing="3" cellpadding="3" width="80%">
+        <tr>
+            <td width="20%">Name:</td>
+            <td width="80%">
+                {% if contact.title %}
+                    {{ contact.title }}
+                {% endif %} {{ contact.first_name }} {{ contact.last_name }}</td>
+        </tr>
+        <tr>
+            <td>Organisation:</td>
+            <td>{{ contact.organisation }}
+                {% if contact.title %} - {{ contact.position }}{% endif %}</td>
+        </tr>
+        <tr>
+            <td>ORCID</td>
+            <td>{{ contact.orcid }}</td>
+        </tr>
+        {% if contact.show_personal_contact_details %}
+            <tr>
+                <td><b>Personal</b></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Phone:</td>
+                <td>{{ contact.phone_number }}</td>
+            </tr>
+            {% if contact.show_mobile_number %}
+                <tr>
+                    <td>Mobile:</td>
+                    <td>{{ contact.mobile_number }}</td>
+                </tr>
+            {% endif %}
+            <tr>
+                <td>E-mail:</td>
+                <td>{{ contact.email_address }}</td>
+            </tr>
+        {% endif %}
+
+        <tr>
+            <td><b>Business</b></td>
+            <td></td>
+        </tr>
+        {% if contact.show_business_contact_details %}
+            <tr>
+                <td>Phone:</td>
+                <td>{{ contact.business_phone_number }}</td>
+            </tr>
+            <tr>
+                <td>E-mail:</td>
+                <td>{{ contact.business_email_address }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td></td>
+                <td>
+                    <font color='red'>
+                        <b>Business contact details not available</b>
+                    </font>
+                </td>
+            </tr>
+        {% endif %}
+    </table>
+
+    <H4>Associated Collections</H4>
+    <table border="0" cellspacing="3" cellpadding="3" width="70%">
+        <tr class='row_thick'>
+            <td width="10%">Vicnode Id</td>
+            <td width="40%">Collection Name</td>
+        </tr>
+
+        {% for collection in collections %}
+            <tr>
+                <td>
+                    <a href="{% url 'application_detail' collection.application_code %}">{{ collection.application_code }}</a>
+                </td>
+                <td>
+                    <a href="{% url 'detail' collection.id %}">{{ collection.name }}</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock content %}

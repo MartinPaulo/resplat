@@ -1,0 +1,57 @@
+{% extends "appl_base.html" %}
+
+{% block title %}Application Details{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {% load static %}
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'storage/app.css' %}"/>
+{% endblock %}
+{% load humanize %}
+{% block content %}
+
+    <h1>Application: {{ application.code }}</h1>
+
+    <table border="0" cellspacing="3" cellpadding="3" width="80%">
+        <tr>
+            <td width="25%">Application Status:</td>
+            <td width="75%">{{ application.status }}</td>
+        </tr>
+        <tr>
+            <td>Application :</td>
+            <td>
+                <a href={{ application.application_form }}>{{ application.application_form }}</a>
+            </td>
+        </tr>
+        <tr>
+            <td>Applying Institution:</td>
+            <td>{{ application.institution }}</td>
+        </tr>
+        <tr>
+            <td>Capital Funding Source:</td>
+            <td>{{ application.capital_funding_source }}</td>
+        </tr>
+    </table>
+
+    <h2>Associated Allocations:</h2>
+    <table border="0" cellspacing="3" cellpadding="3" width="80%">
+        <tr>
+            <td width="25%"><b>Storage Product</b></td>
+            <td width="10%" align="right"><b>Allocation Size (TB)</b></td>
+            <td width="50%"><b>Collection</b></td>
+            <td width="15%"><b>Status</b></td>
+        </tr>
+        {% for allocation in allocations %}
+            <tr>
+                <td>{{ allocation.storage_product }}</td>
+                <td align="right">{{ allocation.size_tb|floatformat:2|intcomma }}</td>
+                <td>
+                    <a href="{% url 'detail' allocation.collection.id %}">{{ allocation.collection }}</a>
+                </td>
+                <td>{{ allocation.status }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endblock content %}
