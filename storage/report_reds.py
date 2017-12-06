@@ -25,10 +25,6 @@ class _ReportRow:
                     'Data Custodian', 'Link', 'Description']
 
     def __init__(self):
-        # following must be in the same order as the column names, as
-        # get_values(...) returns their values in the order they are declared
-        # ALSO: if you add/remove an attribute, it must have a corresponding
-        # COLUMN_NAME entry added/removed
         self._collection_name = ''
         self._node_id = 0
         self._for_1 = 0
@@ -48,61 +44,35 @@ class _ReportRow:
         self._link = ''
         self._description = ''
 
-    @property
-    def collection_name(self):
-        return self._collection_name
-
-    @collection_name.setter
-    def collection_name(self, name):
-        self._collection_name = name
-
-    @property
-    def node_id(self):
-        return self._node_id
-
-    @node_id.setter
-    def node_id(self, value):
-        self._node_id = value
-
-    @property
-    def approved_tb(self):
-        return self._approved_tb
-
-    @approved_tb.setter
-    def approved_tb(self, value):
-        self._approved_tb = value
-
-    @property
-    def available_tb(self):
-        return self._available_tb
-
-    @available_tb.setter
-    def available_tb(self, value):
-        self._available_tb = value
-
-    @property
-    def committed_tb(self):
-        return self._committed_tb
-
-    @committed_tb.setter
-    def committed_tb(self, value):
-        self._committed_tb = value
-
-    @property
-    def custodian(self):
-        return self._custodian
-
-    @custodian.setter
-    def custodian(self, value):
-        self._custodian = value
-
-    @property
-    def link(self):
-        return self._link
-
-    @link.setter
-    def link(self, value):
-        self._link = value
+    def _values(self):
+        """
+        Following must be in the same order as the COLUMN_NAMES, as
+        get_values(...) returns their values in the order below
+        ALSO: if you add/remove an attribute, it must have a corresponding
+        COLUMN_NAME entry added/removed
+        :return: A list containing the attributes in the same order as the
+                 COLUMN_NAMES values
+        """
+        return [
+            self._collection_name,
+            self._node_id,
+            self._for_1,
+            self._for_2,
+            self._for_3,
+            self._for_4,
+            self._for_5,
+            self._for_6,
+            self._for_7,
+            self._for_8,
+            self._for_9,
+            self._for_10,
+            self._approved_tb,
+            self._available_tb,
+            self._committed_tb,
+            self._custodian,
+            self._link,
+            self._description,
+        ]
 
     @property
     def description(self):
@@ -110,6 +80,10 @@ class _ReportRow:
 
     @description.setter
     def description(self, value):
+        """
+        Substitutes every white space instance in the description with a single
+        space
+        """
         self._description = re.sub('\s+', ' ', value).strip()
 
     def set_for_code(self, code_number, value):
@@ -123,7 +97,7 @@ class _ReportRow:
         """
         :return: the values of the instance fields
         """
-        return [value for value in self.__dict__.values()]
+        return [value for value in self._values()]
 
 
 MARKET_MONASH = 'Market.Monash'
@@ -195,7 +169,7 @@ def _allocation_totals(allocations, rr, storage_products):
             elif sp_name in [MARKET_MONASH]:
                 raw_alloc[VAULT_MONASH] += allocation.size_tb * Decimal(1.752)
                 raw_alloc[MARKET_MONASH] += allocation.size_tb * Decimal(1.752)
-    rr.committed_tb = sum(raw_alloc.values())
+    rr._committed_tb = sum(raw_alloc.values())
     return total_used
 
 
@@ -255,22 +229,22 @@ def reds_123_calc(org_type):
         if status == 'Approved':
             # set all the initial column values to 0
             rr = _ReportRow()
-            rr.collection_name = collection.name
-            rr.node_id = request.code
+            rr._collection_name = collection.name
+            rr._node_id = request.code
             count = 0
             # fetch, at most 10, domains for the collection
             for domain in collection.domains.all()[:10]:
                 count += 1
                 rr.set_for_code(count, domain.field_of_research.code)
-            rr.approved_tb = collection.total_allocation
+            rr._approved_tb = collection.total_allocation
             total_used = _allocation_totals(collection.allocations.all(),
                                             rr, storage_products)
             total_used += _non_compute_ingests_used_capacity(collection,
                                                              filtered_ingests)
-            rr.available_tb = _get_tb_from_gb(total_used)
-            rr.custodian = ", ".join(
+            rr._available_tb = _get_tb_from_gb(total_used)
+            rr._custodian = ", ".join(
                 [c.full_name for c in collection.get_custodians()])
-            rr.link = collection.link
+            rr._link = collection.link
             try:
                 description = collection.collectionprofile.merit_justification
             except CollectionProfile.DoesNotExist:
