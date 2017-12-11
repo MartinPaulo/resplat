@@ -3,6 +3,8 @@ import re
 from collections import OrderedDict
 from decimal import Decimal
 
+from django.db import connection
+
 from storage.models import Ingest, Collection, Request, StorageProduct, \
     CollectionProfile
 
@@ -22,7 +24,9 @@ class _ReportRow:
                     'FOR 9', 'FOR 10', 'Research Data Approved (TB)',
                     'Research Data Available (Ready) (TB)',
                     'Total Storage Allocated (Committed) (TB)',
-                    'Data Custodian', 'Link', 'Description']
+                    'Data Custodian',
+                    'Organization', 'Faculty',
+                    'Link', 'Description']
 
     def __init__(self):
         self._collection_name = ''
@@ -41,6 +45,8 @@ class _ReportRow:
         self._available_tb = 0
         self._committed_tb = 0
         self._custodian = ''
+        self._organization = ''
+        self._faculty = ''
         self._link = ''
         self._description = ''
 
@@ -70,6 +76,8 @@ class _ReportRow:
             self._available_tb,
             self._committed_tb,
             self._custodian,
+            self._organization,
+            self._faculty,
             self._link,
             self._description,
         ]
@@ -192,6 +200,39 @@ def _non_compute_ingests_used_capacity(collection, filtered_ingests):
     return capacity_used
 
 
+def _get_organization_and_faculty(collection_id):
+    """
+    To match a collection to an institution:
+          request <- allocation -> collection
+          request -> organization
+          request -> suborganization (faculty)
+    So we have to select all the allocations that reference a collection,
+    and then left join the organization and the faculty.
+
+    TODO: this code makes the assumption that there will always be one row
+          returned. What if there is no row? Or multiple rows?
+    """
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT DISTINCT 
+                COALESCE(short_name, '') AS organization, 
+                COALESCE(name, '') AS faculty 
+            FROM applications_allocation  
+              LEFT JOIN applications_request 
+                ON applications_allocation.application_id = 
+                    applications_request.id
+              LEFT JOIN contacts_organisation 
+                ON applications_request.institution_id = 
+                    contacts_organisation.id 
+              LEFT JOIN applications_suborganization 
+                ON applications_request.faculty_id = 
+                    applications_suborganization.id 
+            WHERE collection_id = %s;""", [collection_id])
+        columns = [col[0] for col in cursor.description]
+        result = dict(zip(columns, cursor.fetchone()))
+        return result
+
+
 def reds_123_calc(org_type):
     """
     REDS == 'Research E-Data Scheme'
@@ -250,6 +291,9 @@ def reds_123_calc(org_type):
             except CollectionProfile.DoesNotExist:
                 description = ''
             rr.description = description
+            o_and_f = _get_organization_and_faculty(collection.id)
+            rr._organization = o_and_f['organization']
+            rr._faculty = o_and_f['faculty']
             result.append(rr.get_values())
 
     return result
