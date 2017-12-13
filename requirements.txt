@@ -5,6 +5,8 @@ docutils    # for admin docs
 django-import-export
 # matplotlib
 
+numpy
+pandas
 
 #other
 coverage==3.6
