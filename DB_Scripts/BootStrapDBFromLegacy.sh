@@ -91,7 +91,7 @@ exitIfError "Failed to complete extraction process"
 if [ "$1" == "heat" ]; then
 	_info "HEAT deploying new trove instance"
 	TIME_START=$SECONDS
-	openstack stack create -t DB_Scripts/deploy.yaml \
+	openstack stack create -t DB_Scripts/deploy_db.yaml \
 		--parameter instance_type="$TROVE_FLAVOR" \
 		--parameter size_gb="$TROVE_SIZE" \
 		--parameter store_id="$TROVE_STORE_ID" \
