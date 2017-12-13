@@ -16,7 +16,7 @@ __Server Outline__:
 
 ## Deployment ##
 
-Uses openstack HEAT to deploy. Review the contents and parameters in [deploy.yaml](deploy.yaml).
+Uses openstack HEAT to deploy. Review the contents and parameters in [deploy_web_front.yaml](deploy_web_front.yaml).
 
 __Requirements__:
  * Openstack CLI
@@ -41,12 +41,12 @@ parameters:
 ```bash
 # Assumes you have Openstack CLI and your OpenStack rc profile sourced. 
 # Launch stack named 'web_front_demo', but of course change the name as you please
-openstack stack create -t deploy.yaml -e environment.yaml web_front_demo
+openstack stack create -t deploy_web_front.yaml -e environment.yaml web_front_demo
 ```
 
 Once the orchestration is complete, point your browser to the IP address. You should see a directory listing of /var/www/html as presented by python SimpleHTTPServer module.
 
-Review user script inside [deploy.yaml](deploy.yaml) to see how this was done.
+Review user script inside [deploy_web_front.yaml](deploy_web_front.yaml) to see how this was done.
 
 
 ### Option 2: Signed certficate ###
@@ -71,7 +71,7 @@ parameters:
 ```bash
 # Assumes you have Openstack CLI and your OpenStack rc profile sourced. 
 # Launch stack named 'web_front', but of course change the name as you please
-openstack stack create -t deploy.yaml -e environment.yaml web_front
+openstack stack create -t deploy_web_front.yaml -e environment.yaml web_front
 ```
 
 The instance is created, but does not have the certificates and nginx is __off__.
