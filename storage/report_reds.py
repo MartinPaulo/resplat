@@ -235,9 +235,10 @@ def _get_organization_and_faculty(collection_id):
 
 def reds_123_calc(org_type):
     """
-    REDS == 'Research E-Data Scheme'
+    REDS == 'Research E-Data Scheme' ?
+    REDS == 'Research Data Services' ?
     :param org_type: the organisations to return the report for
-    :return: a list of rows containing the calculated reds 123 values for
+    :return: a list of rows containing the calculated values for
              each collection that belongs to the org_type
     """
     result = [_ReportRow.COLUMN_NAMES]

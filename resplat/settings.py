@@ -74,6 +74,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django_settings_export.settings_export',
                 'resplat.context_processors.from_settings',
             ],
         },
@@ -134,6 +135,14 @@ except ImportError:
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+
+# following allows us to export the database name and host
+R_DATABASE = DATABASES['default']['NAME']
+R_DB_HOST = DATABASES['default']['HOST']
+SETTINGS_EXPORT = [
+    'R_DATABASE',
+    'R_DB_HOST',
+]
 
 LOGGING = {
     'version': 1,

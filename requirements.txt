@@ -4,7 +4,9 @@ psycopg2    # http://initd.org/psycopg/docs/install.html ?
 docutils    # for admin docs
 django-import-export
 # matplotlib
+django-settings-export
 
+# For testing we use these to read benchmark data in csv and to process the dataframes
 numpy
 pandas
 
