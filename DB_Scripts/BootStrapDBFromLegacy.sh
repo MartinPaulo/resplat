@@ -58,17 +58,17 @@ _info() {
     echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] INFO: $@"
 }
 exitIfError() {
-	if [ $? -ne 0 ]; then
-		_err $1
-		exit 1
-		fi
+    if [ $? -ne 0 ]; then
+        _err $1
+        exit 1
+        fi
 }
 
 if ! [[ "$1" == "heat" || "$1" == "existing" ]] ; then
-	echo "Usage: ./DB_Scripts/BootStrapDBFromLegacy.sh (heat|existing)"
-	echo "  heat: Assumes OpenStack rc is loaded and will HEAT deploy a new Trove instance, to make a database on"
+    echo "Usage: ./DB_Scripts/BootStrapDBFromLegacy.sh (heat|existing)"
+    echo "  heat: Assumes OpenStack rc is loaded and will HEAT deploy a new Trove instance, to make a database on"
     echo "  existing: Assumes DB_HOST is an existing PostgreSQL instance and makes a database there"
-	exit 1
+    exit 1
 fi
 
 
@@ -89,45 +89,45 @@ sql_filename=$(tar -tzvf data.sql.tgz 2> /dev/null | grep -o '[^ ]*$')
 exitIfError "Failed to complete extraction process"
 
 if [ "$1" == "heat" ]; then
-	_info "HEAT deploying new trove instance"
-	TIME_START=$SECONDS
-	openstack stack create -t DB_Scripts/deploy_db.yaml \
-		--parameter instance_type="$TROVE_FLAVOR" \
-		--parameter size_gb="$TROVE_SIZE" \
-		--parameter store_id="$TROVE_STORE_ID" \
-		"$OS_STACK_NAME"
-	exitIfError "Failed to start stack creation"
+    _info "HEAT deploying new trove instance"
+    TIME_START=$SECONDS
+    openstack stack create -t DB_Scripts/deploy_db.yaml \
+        --parameter instance_type="$TROVE_FLAVOR" \
+        --parameter size_gb="$TROVE_SIZE" \
+        --parameter store_id="$TROVE_STORE_ID" \
+        "$OS_STACK_NAME"
+    exitIfError "Failed to start stack creation"
 
-	is_successful=0
-	while [[ 1 ]]; do
-		stack_status=$(openstack stack show "$OS_STACK_NAME" -c stack_status -f value)
-		if [ "$stack_status" = "CREATE_COMPLETE" ]; then
-			_info "Stack complete"
-			is_successful=1
-			break
-		elif [ "$stack_status" = "CREATE_FAILED" ]; then
-			_err "Stack creation failed"
-			is_successful=0
-			break
-		fi
-		TIME_DIFF=$(($SECONDS - $TIME_START))
-		_info "$(($TIME_DIFF / 60)) minutes and $(($TIME_DIFF % 60)) seconds elapsed. stack_status: $stack_status"
-		sleep 30
-	done
+    is_successful=0
+    while [[ 1 ]]; do
+        stack_status=$(openstack stack show "$OS_STACK_NAME" -c stack_status -f value)
+        if [ "$stack_status" = "CREATE_COMPLETE" ]; then
+            _info "Stack complete"
+            is_successful=1
+            break
+        elif [ "$stack_status" = "CREATE_FAILED" ]; then
+            _err "Stack creation failed"
+            is_successful=0
+            break
+        fi
+        TIME_DIFF=$(($SECONDS - $TIME_START))
+        _info "$(($TIME_DIFF / 60)) minutes and $(($TIME_DIFF % 60)) seconds elapsed. stack_status: $stack_status"
+        sleep 30
+    done
 
-	# Confirm success
-	if [ "$is_successful" = "0" ]; then
-		_err "Stack creation failed."
-		exit 1
-	fi
+    # Confirm success
+    if [ "$is_successful" = "0" ]; then
+        _err "Stack creation failed."
+        exit 1
+    fi
 
 
-	DB_HOST=$(openstack stack output show "$OS_STACK_NAME" instance_ip -c output_value -f value)
-	INSTANCE_NAME=$(openstack stack output show "$OS_STACK_NAME" instance_name -c output_value -f value)
-	_info "New DB_HOST is $DB_HOST"
-	_info "New INSTANCE_NAME is $INSTANCE_NAME"
-	_info "Setting password for postgres user"
-	trove root-enable --root_password="$PGPASSWORD" "$INSTANCE_NAME"
+    DB_HOST=$(openstack stack output show "$OS_STACK_NAME" instance_ip -c output_value -f value)
+    INSTANCE_NAME=$(openstack stack output show "$OS_STACK_NAME" instance_name -c output_value -f value)
+    _info "New DB_HOST is $DB_HOST"
+    _info "New INSTANCE_NAME is $INSTANCE_NAME"
+    _info "Setting password for postgres user"
+    trove root-enable --root_password="$PGPASSWORD" "$INSTANCE_NAME"
 fi
 
 

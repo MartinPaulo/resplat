@@ -20,13 +20,13 @@ function valid_ip()
 }
 
 if [ -z $1 ]; then
-	echo "Usage: change_proxy.sh (ip)"
-	exit 1
+    echo "Usage: change_proxy.sh (ip)"
+    exit 1
 fi
 
 if ! valid_ip $1; then
-	echo "Invalid IPv4 address"
-	exit 1
+    echo "Invalid IPv4 address"
+    exit 1
 fi
 
 echo "proxy_pass http://$1;" | sudo tee /etc/nginx/proxy_pass/root_pass.conf
