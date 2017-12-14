@@ -65,6 +65,11 @@ resources:
                 - {IpProtocol: tcp, FromPort: '80', ToPort: '80', CidrIp: 0.0.0.0/0}
                 - {IpProtocol: tcp, FromPort: '443', ToPort: '443', CidrIp: 0.0.0.0/0}
 
+    http_only_security_group:
+        type: AWS::EC2::SecurityGroup
+        properties:
+            GroupDescription: For your application servers to restrict http traffic to only this web_front. Needs post deploy setup to complete
+
     wait_condition:
       type: OS::Heat::WaitCondition
       properties:
@@ -106,26 +111,32 @@ resources:
                     sleep 1
                   done
 
+                  # Install software dependencies
                   apt-get -y upgrade
                   apt-get -y install vim curl nginx
 
+                  # Install source code
                   curl https://raw.githubusercontent.com/MartinPaulo/resplat/master/jenkins/web_front/change_proxy.sh > ~ubuntu/change_proxy.sh
                   curl https://raw.githubusercontent.com/MartinPaulo/resplat/master/jenkins/web_front/nginx_default_website > /etc/nginx/sites-available/default
+                  chmod +x ~ubuntu/change_proxy.sh
 
+                  # Do TLS stuff
                   openssl dhparam -out /etc/ssl/certs/dhparam.pem dhparam_size
                   mkdir /etc/nginx/proxy_pass
+
 
                   echo is_self_signed
                   echo "====="
 
-
                   if [ "is_self_signed" = "True" ]; then
+                    # Generate a self signed cert and update nginx config for self signed mode
                     subj="/C=AU/ST=Victoria/O=UoM/localityName=Melbourne/commonName=/organizationalUnitName=/emailAddress=/"
                     openssl req -x509 -nodes -days 365 -newkey rsa:2048 -subj "$subj" -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt
                     sed -i -e 's/ssl_certificate .*$/ssl_certificate \/etc\/ssl\/certs\/nginx-selfsigned.crt;/' /etc/nginx/sites-available/default
                     sed -i -e 's/ssl_certificate_key .*$/ssl_certificate_key \/etc\/ssl\/private\/nginx-selfsigned.key;/' /etc/nginx/sites-available/default
                     sed -i -e 's/ssl_trusted_certificate /#ssl_trusted_certificate /' /etc/nginx/sites-available/default
-                    # Make a basic service to proxy pass
+
+                    # Make a basic service to proxy pass so you can validate it works when its done. Ok to kill process afterwards
                     cd /var/www/html
                     nohup python -m SimpleHTTPServer &
                     echo "proxy_pass http://localhost:8000;" > /etc/nginx/proxy_pass/root_pass.conf

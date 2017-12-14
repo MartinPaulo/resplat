@@ -10,18 +10,27 @@ __Server Outline__:
  * Serves https traffic by default
  * Redirects http to https
  * Proxies one application
+ * To restrict tracffic to application servers, you get a OpenStack security group "http\_only\_security\_group" to use.
  * Assumes __you__ will do additional things to secure traffic between web\_front server and proxied application
  * All operational matters are up to __you__ after instantiation
 
 
 ## Deployment ##
 
-Uses openstack HEAT to deploy. Review the contents and parameters in [deploy_web_front.yaml](deploy_web_front.yaml).
+Uses openstack HEAT to deploy. Review the contents of [deploy_web_front.yaml](deploy_web_front.yaml) for what is deployed.
 
 __Requirements__:
  * Openstack CLI
  * Ubuntu 16.04 image on Openstack cloud
  * TLS certificates (see the following sections for self-signed or signed options)
+
+Use [OS_deploy_web_front.bash](OS_deploy_web_front.bash) to deploy the server. A HEAT environment file is used to provide parameters.
+```bash
+# Assumes you have Openstack CLI and your OpenStack rc profile sourced. 
+# Launch stack named 'web_front', but of course change the name as you please
+./OS_deploy_web_front.bash web_front environment.yaml
+```
+There are _two_ options you need to consider for your environment.yaml
 
 ### Option 1: Self-signed certificate example (default) ###
 
@@ -36,12 +45,6 @@ parameters:
   image_id: e4d127a9-458e-42a6-8401-2221e7fdc581
   # m2.tiny
   instance_type: cba9ea52-8e90-468b-b8c2-777a94d81ed3
-```
-
-```bash
-# Assumes you have Openstack CLI and your OpenStack rc profile sourced. 
-# Launch stack named 'web_front_demo', but of course change the name as you please
-openstack stack create -t deploy_web_front.yaml -e environment.yaml web_front_demo
 ```
 
 Once the orchestration is complete, point your browser to the IP address. You should see a directory listing of /var/www/html as presented by python SimpleHTTPServer module.
@@ -67,11 +70,6 @@ parameters:
   dhparam_size: 4096
   # No self-signed cert will be made here and nginx will initially be stopped.
   is_self_signed: False
-```
-```bash
-# Assumes you have Openstack CLI and your OpenStack rc profile sourced. 
-# Launch stack named 'web_front', but of course change the name as you please
-openstack stack create -t deploy_web_front.yaml -e environment.yaml web_front
 ```
 
 The instance is created, but does not have the certificates and nginx is __off__.
@@ -143,8 +141,6 @@ Order of concatenation matters! Check support from the provider if this is not e
     ssl_trusted_certificate /etc/ssl/certs/provider_root.crt;
     ...
 ```
-
-
 
 
 ## Testing SSL installation ##

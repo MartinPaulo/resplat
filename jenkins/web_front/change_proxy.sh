@@ -1,5 +1,10 @@
 #!/bin/bash
-
+#
+# Simple script that updates the IP address to proxy pass
+#
+# Arguments:
+# - $1: IPv4 address to change
+#
 
 # From http://www.linuxjournal.com/content/validating-ip-address-bash-script
 function valid_ip()
