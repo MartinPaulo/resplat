@@ -9,7 +9,7 @@ set +x
 ### Parameter setup & check
 if [ -z "$1" ]; then
     echo "Usage: ./OS_deploy_replace.bash (profile)"
-    echo "  profile: A shell script with environment variables this script needs. See & copy example.profile.template for help"
+    echo "  profile: A shell script with environment variables this script needs. Make a copy of example.profile.template and fill in the details"
     exit
 fi
 source "$1"
