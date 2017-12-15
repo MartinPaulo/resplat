@@ -25,7 +25,7 @@ A jenkins pipeline is used to build, test and deploy instances of the applicatio
 * Delete all old stacks
 By updating the web front server only when everything is successful, we can ensure minimal risks to operation of this application.
 
-See [Setup](#Setup) section for instructions.
+See [Setup](#setup) section for instructions.
 
 ### Databases
 
@@ -48,12 +48,19 @@ For pipeline logic, see [Jenkinsfile](../Jenkinsfile)
 
 For Jenkins server, see https://github.com/AlanCLo/JenkinsServer
 
+See [Setup](#setup) for how to setup parameters for these builds
+
 ### Backup
 
+Nightly processes will perform full database dumps of the Prod database. Backup is stored on OpenStack SWIFT using duplicity. This system is also used to mirror the QA database with Prod by executing database restoration with the latest backup. Backups stored includes:
+* Daily
+* Weekly
+* Monthly
+Rolling window policies are applied to each of these frequencies and backups older than X will be removed.
 
-Currently, the Jenkins Server is reponsible for execution of backup scripts.
+Currently, the Jenkins Server is reponsible for execution of backup scripts and restoration.
 
-For backup scripts, see https://github.com/AlanCLo/JenkinsServer/duplicity 
+For backup scripts documentation, see https://github.com/AlanCLo/JenkinsServer/duplicity 
 
 ## Setup
 
