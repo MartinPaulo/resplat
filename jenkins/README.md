@@ -64,8 +64,20 @@ For backup scripts documentation, see https://github.com/AlanCLo/JenkinsServer/d
 
 ## Setup
 
+### One instance of the deployment pattern
 
+This section covers how to deploy once instance of the deployment pattern. This allows you to make one for yourself, or to setup the QA and Prod stages in the Jenkins build pipeline.
 
+[OS_deploy_replace.bash](OS_deploy_replace.bash) expects a number of environment variables for parameters and files which is organised into folders for the Jenkins pipeline to fetch.
+
+Example folder based on QA.
+```bash
+ubuntu@jenkins:/build_profiles/resplat.qa$ ls -1
+deploy.params
+extra_ssh_keys.pub
+local_settings.py
+Resplat-Reporting-openrc.sh
+```
 
 
 
