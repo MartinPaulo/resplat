@@ -64,19 +64,39 @@ For backup scripts documentation, see https://github.com/AlanCLo/JenkinsServer/d
 
 ## Setup
 
+### Database
+
+TODO
+
 ### One instance of the deployment pattern
 
 This section covers how to deploy once instance of the deployment pattern. This allows you to make one for yourself, or to setup the QA and Prod stages in the Jenkins build pipeline.
 
-[OS_deploy_replace.bash](OS_deploy_replace.bash) expects a number of environment variables for parameters and files which is organised into folders for the Jenkins pipeline to fetch.
+[OS_deploy_replace.bash](OS_deploy_replace.bash) expects a number of environment variables for deployment parameters and files which is organised into a __single__ folder for the Jenkins pipeline to reference. This script expects as an argument, a single file that will fill in all required parameters.
 
-Example folder based on QA.
+#### Prerequisites
+
+* _OpenStack profile_: The user-tenancy on OpenStack for this infrastructure. Download from dashboard.
+* _local\_settings.py_: The application's django local\_settings.py that will be copied to the new instance. Copy [resplat/local_settings_template.py](../resplat/local_settings_template.py) to start a new one. 
+* _extra\_ssh\_keys.pub_: A file with concatenated ssh public keys that will be appended to .ssh/authorized\_keys on the new server
+* _web\_front server_: A web front server the script will talk to to update what it proxy passes. See [web_front](web_front)
+
+#### Putting it together
+
+Copy and complete [example.profile.template]. Follow the instructions in the comment to help you fill in the required parameters. Keep this profile and prerequisites in a single folder to keep it organised
+
+The following is an example folder based on QA setup.
 ```bash
 ubuntu@jenkins:/build_profiles/resplat.qa$ ls -1
-deploy.params
-extra_ssh_keys.pub
-local_settings.py
-Resplat-Reporting-openrc.sh
+deploy.params                # A completed version of example.profile.template
+extra_ssh_keys.pub           # Keys of other team members who need to access the server
+local_settings.py            # Connection settings to QA database
+Resplat-Reporting-openrc.sh  # Tenancy for OpenStack
+```
+
+To run the script with the above example:
+```bash
+$ ./OS_deploy_replace.bash /build_profiles/resplat.qa/deploy.params
 ```
 
 
