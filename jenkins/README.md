@@ -77,13 +77,14 @@ This section covers how to deploy once instance of the deployment pattern. This 
 #### Prerequisites
 
 * _OpenStack profile_: The user-tenancy on OpenStack for this infrastructure. Download from dashboard.
-* _local\_settings.py_: The application's django local\_settings.py that will be copied to the new instance. Copy [resplat/local_settings_template.py](../resplat/local_settings_template.py) to start a new one. 
+* _Database & local\_settings.py_: The application's django local\_settings.py that will be copied to the new instance. Copy [resplat/local_settings_template.py](../resplat/local_settings_template.py) to start a new one. The main properties to set are the database connection details the application will use.
 * _extra\_ssh\_keys.pub_: A file with concatenated ssh public keys that will be appended to .ssh/authorized\_keys on the new server
-* _web\_front server_: A web front server the script will talk to to update what it proxy passes. See [web_front](web_front)
+* _Web Front server_: See [web_front](web_front) for setup. __Important__: Make sure the server that executes OS\_deploy\_replace.bash has ssh access to that server. For example, if you are getting a Jenkins server to run this script, you will need to add the ssh key for the jenkins user to that web front machine so it can talk to it. Do a quick ssh test to make sure it works.
+
 
 #### Putting it together
 
-Copy and complete [example.profile.template]. Follow the instructions in the comment to help you fill in the required parameters. Keep this profile and prerequisites in a single folder to keep it organised
+Copy and complete [example.profile.template](example.profile.template). Follow the instructions in the comment to help you fill in the required parameters. Keep this profile and prerequisites in a single folder to keep it organised
 
 The following is an example folder based on QA setup.
 ```bash
@@ -98,6 +99,37 @@ To run the script with the above example:
 ```bash
 $ ./OS_deploy_replace.bash /build_profiles/resplat.qa/deploy.params
 ```
+
+### Jenkins Building
+
+This section documents how the Jenkins project is setup for this application on a Jenkins server.
+
+#### Prerequisites
+
+* A Jenkins build server
+* The [Jenkins pipeline](../Jenkinsfile) users two (2) instances of the deployment pattern for QA and Prod respectively. Follow the instructions above to setup both stacks inclusive of web front servers, database and profile details.
+
+TODO - test settings.
+
+#### Jenkins project
+
+1 Create a 'Multibranch Pipeline' project
+2 Add Branch sources to this Git repository
+
+#### Jenkins Nodes
+
+For any number of Jenkins nodes that may do the build, you'll need to setup enviornment variables the [Jenkinsfile](../Jenkinsfile) refers to for QA and Prod.
+
+1 Go to 'Manage Jenkins' > 'Manage Nodes' > (node) > Configure
+2 Under 'Node Properties', make sure 'Environment Variables' is checked.
+3 Add:
+```
+RESPLAT_TEST_SETTINGS=/build_profiles/resplat.test/
+RESPLAT_QA_SETTINGS=/build_profiles/resplat.qa/
+RESPLAT_PROD_SETTINGS=/build_profiles/resplat.prod/
+```
+
+
 
 
 
