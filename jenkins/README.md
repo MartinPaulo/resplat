@@ -25,7 +25,7 @@ A jenkins pipeline is used to build, test and deploy instances of the applicatio
 * Delete all old stacks
 By updating the web front server only when everything is successful, we can ensure minimal risks to operation of this application.
 
-See Setup section for instructions.
+See [Setup](#Setup) section for instructions.
 
 ### Databases
 
