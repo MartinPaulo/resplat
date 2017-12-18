@@ -34,6 +34,7 @@ STACK_SECURITY_GROUP_ID=de1587e7-507a-4e64-baf8-a87737b5fad7
 ### Other script requirements
 
 # Full path to where this script is in your filesystem
+# Note: comment this out for jenkins builds since the jenkinsfile will populate where the checkout is
 SCRIPT_HOME=/Users/loa1/Documents/Git/resplat/jenkins
 
 # Location of which local_settings.py to copy to this server
