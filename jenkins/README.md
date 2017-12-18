@@ -56,6 +56,7 @@ Nightly processes will perform full database dumps of the Prod database. Backup 
 * Daily
 * Weekly
 * Monthly
+
 Rolling window policies are applied to each of these frequencies and backups older than X will be removed.
 
 Currently, the Jenkins Server is reponsible for execution of backup scripts and restoration.
@@ -64,9 +65,18 @@ For backup scripts documentation, see https://github.com/AlanCLo/JenkinsServer/d
 
 ## Setup
 
+This section covers the current instructure setup as per the diagram in overview.
+
 ### Database
 
 TODO
+
+### Web front
+
+See [Web Front](web_front) for instructions.
+ * QA instance is using 'Self-signed' mode
+ * Prod instance is using 'Signed certificate' mode
+ 
 
 ### One instance of the deployment pattern
 
@@ -107,29 +117,32 @@ This section documents how the Jenkins project is setup for this application on 
 #### Prerequisites
 
 * A Jenkins build server
-* The [Jenkins pipeline](../Jenkinsfile) users two (2) instances of the deployment pattern for QA and Prod respectively. Follow the instructions above to setup both stacks inclusive of web front servers, database and profile details.
+* The [Jenkins pipeline](../Jenkinsfile) uses:
+  * Three database instances of the application (one for build/testing local to jenkins, a QA and Prod)
+  * Two web front servers for QA and Prod
+  * Two instances of the deployment pattern (QA and Prod), using the aforementioned databases and web fronts.
 
-TODO - test settings.
-
-#### Jenkins project
-
-1 Create a 'Multibranch Pipeline' project
-2 Add Branch sources to this Git repository
+Follow the instructions above to setup both stacks inclusive of web front servers, database and profile details.
 
 #### Jenkins Nodes
 
 For any number of Jenkins nodes that may do the build, you'll need to setup enviornment variables the [Jenkinsfile](../Jenkinsfile) refers to for QA and Prod.
 
-1 Go to 'Manage Jenkins' > 'Manage Nodes' > (node) > Configure
-2 Under 'Node Properties', make sure 'Environment Variables' is checked.
-3 Add:
+ 1. Go to 'Manage Jenkins' > 'Manage Nodes' > (node) > Configure
+ 2. Under 'Node Properties', make sure 'Environment Variables' is checked.
+ 3. Add:
 ```
 RESPLAT_TEST_SETTINGS=/build_profiles/resplat.test/
 RESPLAT_QA_SETTINGS=/build_profiles/resplat.qa/
 RESPLAT_PROD_SETTINGS=/build_profiles/resplat.prod/
 ```
 
+#### Jenkins project
 
+ 1. Create a 'Multibranch Pipeline' project
+ 2. Add Branch sources to this Git repository
+
+Once you save the project, Jenkins will start the first scan of the repository and initate a build. You can adjust the trigger for further builds (manual by default) under the project 'Configuration' page.
 
 
 
