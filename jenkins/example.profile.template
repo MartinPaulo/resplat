@@ -34,6 +34,7 @@ STACK_SECURITY_GROUP_ID=de1587e7-507a-4e64-baf8-a87737b5fad7
 ### Other script requirements
 
 # Full path to where this script is in your filesystem
+# Note: comment this out for jenkins builds since the jenkinsfile will populate where the checkout is
 SCRIPT_HOME=/Users/loa1/Documents/Git/resplat/jenkins
 
 # Location of which local_settings.py to copy to this server
@@ -46,6 +47,8 @@ EXTRA_SSH_KEYS=/Users/loa1/SecretFiles/extra_ssh_keys.pub
 # NOTE: Make sure you have ssh to this server from where you want to run this script first so that it is in ~/.ssh/known_hosts
 WEB_FRONT_USER="ubuntu"
 WEB_FRONT_IP="xxx.xxx.xxx.xxx"
+# Place holder for any additional ssh options if you like
+SSH_OPTS=""
 
 # Number of seconds script will wait before checking the status of HEAT deployment
 WAIT_CHECK_SECONDS=30

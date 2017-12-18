@@ -29,6 +29,7 @@ LOCAL_SETTINGS_PY_SRC
 EXTRA_SSH_KEYS
 WEB_FRONT_USER
 WEB_FRONT_IP
+SSH_OPTS
 WAIT_CHECK_SECONDS
 EOF
 ))
@@ -145,7 +146,7 @@ _exitIfError "Failed to get IP address of new server"
 _info "$NEW_NAME IP address is $NEW_IP"
 
 # Update the proxy on WEB_FRONT server over ssh
-WEB_FRONT_SSH_C="ssh $WEB_FRONT_USER@$WEB_FRONT_IP ./change_proxy.sh "
+WEB_FRONT_SSH_C="ssh $SSH_OPTS $WEB_FRONT_USER@$WEB_FRONT_IP ./change_proxy.sh "
 $WEB_FRONT_SSH_C "$NEW_IP"
 _exitIfError "Failed to update IP address on WEB_FRONT using command: $WEB_FRONT_SSH_C $NEW_IP"
 _info "WEB_FRONT server updated."
