@@ -159,7 +159,7 @@ resources:
 
                   git clone https://github.com/MartinPaulo/resplat.git
                   cd /resplat/
-                  pip3 install -r requirements.txt
+                  pip3 install -r requirements-test.txt
 
                   # build the database
                   # curl -o dump.sql https://swift.rc.nectar.org.au:8888/v1/AUTH_612a4df9bfab47c38324ead4e5f8dd79/trial/dump.sql

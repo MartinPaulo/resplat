@@ -1,0 +1,9 @@
+-r requirements.txt
+
+# For testing we use these to read benchmark data in csv and to process
+# the dataframes
+numpy
+pandas
+
+# Other
+coverage==3.6
