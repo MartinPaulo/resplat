@@ -5,7 +5,7 @@ from storage.views import ingests_for_week, collection_status, reds_report, \
     difference_between_reported_and_approved, ingests_over_time, \
     demographics_stream, unfunded_report, for_code_ingest_uom, \
     for_code_ingest_all, collection_detail, application_detail, contact_detail, \
-    collection_index
+    collection_index, reds_report_all
 
 urlpatterns = [
     url(r'^report/$', ingests_for_week),
@@ -13,6 +13,7 @@ urlpatterns = [
     url(r'^collection_status$', collection_status),
     url(r'^reds_report/$', reds_report),
     url(r'^reds_report_uom/$', reds_report_uom),
+    url(r'^reds_report_all/$', reds_report_all),
     url(r'^vicnode_funding_by_sp', vicnode_funding_by_storage_product),
     url(r'^diff_reported_and_approved/$',
         difference_between_reported_and_approved),

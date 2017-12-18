@@ -15,32 +15,20 @@ class RedsReportOptions:
 
 
 class _ReportRow:
-    """
-    the values of a row in the report
-    """
-    # Description can be quite a long multi-line string...
-    COLUMN_NAMES = ['Collection Name', 'Node ID', 'FOR 1', 'FOR 2',
-                    'FOR 3', 'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8',
-                    'FOR 9', 'FOR 10', 'Research Data Approved (TB)',
-                    'Research Data Available (Ready) (TB)',
-                    'Total Storage Allocated (Committed) (TB)',
-                    'Data Custodian',
-                    'Organization', 'Faculty',
-                    'Link', 'Description']
-
-    def __init__(self):
+    def __init__(self, is_reds=True):
+        self.is_reds = is_reds
         self._collection_name = ''
         self._node_id = 0
-        self._for_1 = 0
-        self._for_2 = 0
-        self._for_3 = 0
-        self._for_4 = 0
-        self._for_5 = 0
-        self._for_6 = 0
-        self._for_7 = 0
-        self._for_8 = 0
-        self._for_9 = 0
-        self._for_10 = 0
+        self._for_1 = ''
+        self._for_2 = ''
+        self._for_3 = ''
+        self._for_4 = ''
+        self._for_5 = ''
+        self._for_6 = ''
+        self._for_7 = ''
+        self._for_8 = ''
+        self._for_9 = ''
+        self._for_10 = ''
         self._approved_tb = 0
         self._available_tb = 0
         self._committed_tb = 0
@@ -49,6 +37,26 @@ class _ReportRow:
         self._faculty = ''
         self._link = ''
         self._description = ''
+
+    @staticmethod
+    def column_names(is_reds=True):
+        """
+        :param is_reds: True if FOR codes are to be included, False if not
+        :return: the values of a row in the report
+        """
+        # Description can be quite a long multi-line string...
+        result = ['Collection Name', 'Node ID']
+        if is_reds:
+            result += ['FOR 1', 'FOR 2',
+                       'FOR 3', 'FOR 4', 'FOR 5', 'FOR 6', 'FOR 7', 'FOR 8',
+                       'FOR 9', 'FOR 10']
+        result += ['Research Data Approved (TB)',
+                   'Research Data Available (Ready) (TB)',
+                   'Total Storage Allocated (Committed) (TB)',
+                   'Data Custodian',
+                   'Organization', 'Faculty',
+                   'Link', 'Description']
+        return result
 
     def _values(self):
         """
@@ -59,28 +67,16 @@ class _ReportRow:
         :return: A list containing the attributes in the same order as the
                  COLUMN_NAMES values
         """
-        return [
-            self._collection_name,
-            self._node_id,
-            self._for_1,
-            self._for_2,
-            self._for_3,
-            self._for_4,
-            self._for_5,
-            self._for_6,
-            self._for_7,
-            self._for_8,
-            self._for_9,
-            self._for_10,
-            self._approved_tb,
-            self._available_tb,
-            self._committed_tb,
-            self._custodian,
-            self._organization,
-            self._faculty,
-            self._link,
-            self._description,
-        ]
+        result = [self._collection_name, self._node_id]
+        if self.is_reds:
+            result += [self._for_1, self._for_2, self._for_3, self._for_4,
+                       self._for_5, self._for_6, self._for_7, self._for_8,
+                       self._for_9, self._for_10]
+        result += [self._approved_tb, self._available_tb,
+                   self._committed_tb, self._custodian,
+                   self._organization, self._faculty, self._link,
+                   self._description, ]
+        return result
 
     @property
     def description(self):
@@ -233,15 +229,16 @@ def _get_organization_and_faculty(collection_id):
         return result
 
 
-def reds_123_calc(org_type):
+def reds_123_calc(org_type, is_reds=True):
     """
     REDS == 'Research E-Data Scheme' ?
     REDS == 'Research Data Services' ?
     :param org_type: the organisations to return the report for
+    :param is_reds: if the report is a reds one or not...
     :return: a list of rows containing the calculated values for
              each collection that belongs to the org_type
     """
-    result = [_ReportRow.COLUMN_NAMES]
+    result = [_ReportRow.column_names(is_reds)]
 
     if RedsReportOptions.MELBOURNE == org_type:
         storage_products = StorageProduct.objects.filter(
@@ -261,7 +258,7 @@ def reds_123_calc(org_type):
             if not request or not request.status:
                 continue
             status = request.status.value
-            if request.scheme.value not in VALID_SCHEMES:
+            if is_reds and request.scheme.value not in VALID_SCHEMES:
                 continue
         except (Request.DoesNotExist, Request.MultipleObjectsReturned):
             logger.exception("Original request not found?")
@@ -270,14 +267,15 @@ def reds_123_calc(org_type):
         # we only want data for the approved applications
         if status == 'Approved':
             # set all the initial column values to 0
-            rr = _ReportRow()
+            rr = _ReportRow(is_reds)
             rr._collection_name = collection.name
             rr._node_id = request.code
-            count = 0
-            # fetch, at most 10, domains for the collection
-            for domain in collection.domains.all()[:10]:
-                count += 1
-                rr.set_for_code(count, domain.field_of_research.code)
+            if is_reds:
+                count = 0
+                # fetch, at most 10, domains for the collection
+                for domain in collection.domains.all()[:10]:
+                    count += 1
+                    rr.set_for_code(count, domain.field_of_research.code)
             rr._approved_tb = collection.total_allocation
             total_used = _allocation_totals(collection.allocations.all(),
                                             rr, storage_products)

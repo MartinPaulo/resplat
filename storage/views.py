@@ -165,14 +165,22 @@ def contact_detail(request, contact_id):
 
 
 @login_required
-def reds_report_uom(request):
-    return csv_stream(reds_123_calc(RedsReportOptions.MELBOURNE),
-                      'reds123_uom.csv')
+def reds_report(request,
+                report_options=RedsReportOptions.ALL,
+                is_reds=True,
+                filename='reds123_all.csv'):
+    return csv_stream(reds_123_calc(report_options, is_reds), filename)
 
 
 @login_required
-def reds_report(request):
-    return csv_stream(reds_123_calc(RedsReportOptions.ALL), 'reds123_all.csv')
+def reds_report_uom(request):
+    return reds_report(request, RedsReportOptions.MELBOURNE,
+                       filename='reds123_uom.csv')
+
+
+@login_required
+def reds_report_all(request):
+    return reds_report(request, is_reds=False, filename='reds_all.csv')
 
 
 @login_required
