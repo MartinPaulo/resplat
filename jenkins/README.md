@@ -69,7 +69,7 @@ This section covers the current instructure setup as per the diagram in overview
 
 ### Database
 
-TODO
+See [../DB_Scripts](../DB_Scripts)
 
 ### Web front
 
