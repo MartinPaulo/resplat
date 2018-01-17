@@ -139,9 +139,11 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 # following allows us to export the database name and host
 R_DATABASE = DATABASES['default']['NAME']
 R_DB_HOST = DATABASES['default']['HOST']
+R_ENVIRONMENT_NAME = ENVIRONMENT_NAME
 SETTINGS_EXPORT = [
     'R_DATABASE',
     'R_DB_HOST',
+    'R_ENVIRONMENT_NAME',
 ]
 
 LOGGING = {
