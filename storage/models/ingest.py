@@ -3,14 +3,17 @@ import datetime
 from django.db import models
 
 
+class IngestFileManager(models.Manager):
+
+    def create_ingest_file(self, url, type, source, location,
+                           extract_date, completed=False):
+        return IngestFile(url=url, type=type, source=source, location=location,
+                          extract_date=extract_date, completed=completed)
+
+
 class IngestFile(models.Model):
     """
     A record of the files giving usage ingested to date
-
-    The fields removed from the VicNode table are:
-
-    * completed
-
     """
     SOURCE_CHOICES = (('MON', 'Monash'), ('UOM', 'University of Melbourne'))
     SOURCE_LOCATIONS = ((1, 'Clayton'), (2, 'Queensbury'), (3, 'Noble Park'))
@@ -33,6 +36,10 @@ class IngestFile(models.Model):
         help_text='the date the file was processed')
     url = models.URLField(db_column='file_name',
                           help_text='where the file was fetched from')
+    # following is not used...
+    completed = models.BooleanField(default=False, null=False)
+
+    objects = IngestFileManager()
 
     def __str__(self):
         return '{ed} {s} {ld} {url}'.format(

@@ -198,6 +198,7 @@ resources:
                   python3 manage.py migrate --fake-initial
                   # python3 manage.py createsuperuser --noinput --username SU_NAME --email SU_EMAIL
                   echo "from django.contrib.auth.models import User; User.objects.create_superuser('SU_NAME', 'SU_EMAIL', 'SU_PASSWORD')" | python3 manage.py shell
+                  python3 manage.py createcachetable
                   python3 manage.py collectstatic --no-input
 
                   # set up apache to serve the django app

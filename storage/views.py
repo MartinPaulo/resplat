@@ -1,11 +1,15 @@
 import logging
 from datetime import datetime, timedelta
+from urllib.parse import unquote
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.postgres.search import SearchQuery, SearchVector
+from django.core.cache import cache
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render, get_object_or_404
 
 from storage.csv_streamer import csv_stream
+from storage.forms import CollectionsSearchForm
 from storage.models import Ingest, StorageProduct, Collection, \
     CollectionProfile, Allocation, Request, Contact
 from storage.report_demographics import demographics_report
@@ -127,18 +131,77 @@ def collection_detail(request, collection_id):
     return render(request, 'collection_detail.html', context=context)
 
 
+def _or(_left, _right, _type):
+    result = _left  # default to left
+    if isinstance(_left, _type) and isinstance(_right, _type):
+        # if both are of the same type then or them together
+        result = _left | _right
+    elif _left is None:
+        # otherwise, if there is no left, default to right
+        result = _right
+    return result
+
+
+def _plus(_left, _right, _type):
+    result = _left  # default to left
+    if isinstance(_left, _type) and isinstance(_right, _type):
+        # if both are of the same type then add them together
+        result = _left + _right
+    elif _left is None:
+        # otherwise, if there is no left, default to right
+        result = _right
+    return result
+
+
+def _search_cacheable(name, code):
+    key = name + code
+    # Is this result session specific?
+    result = cache.get(key)
+    if not result:
+        query = None
+        vector = None
+        if name:
+            query = SearchQuery(name)
+            vector = SearchVector('name')
+        if code:
+            query = _or(query, SearchQuery(code), SearchQuery)
+            vector = _plus(vector,
+                           SearchVector('allocations__application__code'),
+                           SearchVector)
+        if query is not None:
+            collections = Collection.objects.annotate(search=vector).filter(
+                search=query).order_by('name', 'id').distinct('name', 'id')
+        else:
+            collections = Collection.objects.all().order_by('name')
+        result = list(collections)
+        cache.set(key, result)
+    return result
+
+
 @login_required
 def collection_index(request):
-    paginator = Paginator(Collection.objects.all().order_by('name'), 25,
-                          orphans=4)
-    page = request.GET.get('page', 1)
+    name = ''
+    code = ''
+    if request.method == 'POST':
+        form = CollectionsSearchForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            code = form.cleaned_data['code']
+    else:
+        name = unquote(request.GET.get('name', ''))
+        code = unquote(request.GET.get('code', ''))
+        form = CollectionsSearchForm(initial={'name': name, 'code': code})
+    collections = _search_cacheable(name, code)
+    paginator = Paginator(collections, 25, orphans=4)
+    page_wanted = request.GET.get('page', 1)
     try:
-        collections = paginator.page(page)
+        collections = paginator.page(page_wanted)
     except PageNotAnInteger:  # If page is not an integer, deliver first page
         collections = paginator.page(1)
     except EmptyPage:  # If page is out of range, deliver last page
         collections = paginator.page(paginator.num_pages)
-    context = {'latest_collection_list': collections}
+    context = {'latest_collection_list': collections, 'form': form,
+               'name': name, 'code': code}
     return render(request, 'collection_index.html', context)
 
 

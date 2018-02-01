@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admindocs',
     'django.contrib.humanize',
+    'django.contrib.postgres',
     'import_export',
     'storage.apps.StorageConfig',
     'storage.templatetags',
@@ -80,6 +81,13 @@ TEMPLATES = [
         },
     },
 ]
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'resplat_cache',
+    }
+}
 
 WSGI_APPLICATION = 'resplat.wsgi.application'
 

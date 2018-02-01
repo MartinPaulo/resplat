@@ -322,7 +322,7 @@ class Ingest(models.Model):
         verbose_name='allocated capacity in GB',
         help_text='the allocated capacity in GB')
     used_capacity = models.DecimalField(
-        max_digits=15, decimal_places=2, blank=True, null=True,
+        max_digits=15, decimal_places=2, default=0, blank=True, null=True,
         verbose_name='ingested capacity in GB',
         help_text='the ingested capacity in GB')
     collection = models.ForeignKey(
@@ -333,7 +333,7 @@ class Ingest(models.Model):
         'storage.StorageProduct', models.DO_NOTHING,
         help_text='the storage product holding the data')
     used_replica = models.DecimalField(
-        max_digits=15, decimal_places=2, blank=True, null=True, default=0,
+        max_digits=15, decimal_places=2, default=0, blank=True, null=True,
         verbose_name='the replica storage used (if any) in GB',
         help_text='??')
 

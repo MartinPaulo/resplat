@@ -24,7 +24,7 @@ urlpatterns = [
     url(r'^vicnode_unfunded/$', unfunded_report),
     url(r'^for_code_ingest_uom/$', for_code_ingest_uom),
     url(r'^for_code_ingest_all/$', for_code_ingest_all),
-    url(r'^collections/$', collection_index, name='index'),
+    url(r'^collections/$', collection_index, name='collections'),
     url(r'^collection/(?P<collection_id>\d+)/$', collection_detail,
         name='detail'),
     url(r'^application/(?P<application_code>[a-zA-Z0-9_.-]+)$',

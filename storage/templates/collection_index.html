@@ -5,6 +5,14 @@
 {% block content %}
     <h1>Index of Collections</h1>
 
+    <form id="i_search_form" action="{% url 'collections' %}" method="post"
+          accept-charset="utf-8">
+        {% csrf_token %}
+        <h2>Search:</h2>
+        {{ form }}
+        <input class="search_button" type="submit" value="Submit">
+    </form>
+
     {% if latest_collection_list %}
         <table border="0" cellspacing="3" cellpadding="3" width="90%">
             <tr>
@@ -40,12 +48,13 @@
         <div class="pagination">
              <span class="step-links">
              {% if latest_collection_list.has_previous %}
-                 <a href="?page={{ latest_collection_list.previous_page_number }}">previous</a>
+                 <a href="?page={{ latest_collection_list.previous_page_number }}&amp;name={{ name|urlencode }}&amp;code={{ code|urlencode }}">&laquo; previous</a>
              {% endif %}
-                <span class="current">Page {{ latest_collection_list.number }} of {{ latest_collection_list.paginator.num_pages }}.</span>
-                {% if latest_collection_list.has_next %}
-                    <a href="?page={{ latest_collection_list.next_page_number }}">next</a>
-                {% endif %}
+                 {# we can put a bar with links to the actual pages here if need be #}
+                 <span class="current">Page {{ latest_collection_list.number }} of {{ latest_collection_list.paginator.num_pages }}.</span>
+                 {% if latest_collection_list.has_next %}
+                     <a href="?page={{ latest_collection_list.next_page_number }}&amp;name={{ name|urlencode }}&amp;code={{ code|urlencode }}">next &raquo;</a>
+                 {% endif %}
              </span>
         </div>
     {% else %}
