@@ -569,7 +569,7 @@ class Request(models.Model):
     scheme = models.ForeignKey(
         'storage.Label', models.DO_NOTHING, blank=True, null=True,
         limit_choices_to=Q(group__value__exact='Allocation Scheme'),
-        default=GroupDefaultLabel('Allocation Scheme'),
+        # default=GroupDefaultLabel('Allocation Scheme'),
         verbose_name='allocation scheme',
         related_name='application_allocation_scheme',
         help_text='the scheme to be used for the collection')
