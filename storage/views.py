@@ -12,6 +12,7 @@ from storage.csv_streamer import csv_stream
 from storage.forms import CollectionsSearchForm
 from storage.models import Ingest, StorageProduct, Collection, \
     CollectionProfile, Allocation, Request, Contact
+from storage.models.applications import AccessLayerMember
 from storage.report_demographics import demographics_report
 from storage.report_diff_reported_and_approved import \
     get_difference_between_approved_and_reported
@@ -116,10 +117,13 @@ def collection_detail(request, collection_id):
         'application__scheme__value',
         'application__status__value').distinct()
     funding_report = FundingReportForCollection(collection)
+    access_layers = AccessLayerMember.objects.filter(
+        collection=collection_id).distinct()
 
     context = {'collection': collection,
                'collection_profile': collection_profile,
                'allocations': allocations,
+               'access_layers': access_layers,
                'funding': {
                    'report': funding_report.report,
                    'type': funding_report.reportType,

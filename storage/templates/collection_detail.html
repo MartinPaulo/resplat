@@ -91,6 +91,17 @@
         </tr>
     </table>
 
+    <h2>Access Layers</h2>
+    {% if access_layers %}
+        <ul>
+            {%  for layer in access_layers.all %}
+                <li>{{ layer.accesslayer }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No access layer is recorded.</p>
+    {% endif %}
+
     <h2>Custodians:</h2>
 
     {% if collection.custodians.all %}
