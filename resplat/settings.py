@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'import_export',
     'storage.apps.StorageConfig',
     'storage.templatetags',
+    'ingest.apps.IngestConfig',
 ]
 
 MIDDLEWARE = [

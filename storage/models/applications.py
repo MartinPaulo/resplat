@@ -47,7 +47,7 @@ class AccessLayerMember(models.Model):
     """
     id = models.AutoField(primary_key=True, help_text='the primary key')
     collection = models.ForeignKey(
-        'storage.Collection', related_name='collections',
+        'storage.Collection', models.CASCADE, related_name='collections',
         help_text='the collection this access layer is associated with',
         default=1)
     accesslayer = models.ForeignKey(
