@@ -8,7 +8,7 @@
 #   - A URL of where to find the PostgreSQL database dump from
 #   - GPG decryption password
 #   - New database connection values
-#   - postgres user account for th database
+#   - postgres user account for the database
 #   - New django admin values
 #   - Openstack tenancy with Trove quota and rc profile
 # Set all of these in the environment before running script
