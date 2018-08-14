@@ -9,6 +9,8 @@ Todo:
 * Rename collection profile to "description"
 * Get rid of estimated collection size
 * Don't hide collection profile
+* Work out why django migrations are creating the same migration every time...
+  (compare 19, 20 and 21)
 
 
 access layer <- interface -> collection use -> collection (project)
